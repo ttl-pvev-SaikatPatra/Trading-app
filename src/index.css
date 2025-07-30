@@ -5,13 +5,63 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  background-color: #000000;  /* black background */
+  color: #e0e0e0;             /* light grey text for better contrast */
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+  color: #c5c8c6;            /* softer light grey for code */
+  background-color: #1e1e1e; /* dark background for code blocks */
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Additional helpful styles for links, buttons, etc. */
+a {
+  color: #8ab4f8;              /* light blue links */
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  background-color: #111111;
+  color: #e0e0e0;
+  border: 1px solid #444444;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #222222;
+}
+
+/* Example classes you can use in your dashboard HTML/JSX */
+
+.buy-signal {
+  color: #00ff00;             /* bright green */
+}
+
+.short-signal {
+  color: #ff4444;             /* red */
+}
+
+.neutral {
+  color: #dcdcdc;
+}
+
+.data-card {
+  background-color: #121212;  /* dark card background */
+  border: 1px solid #333333;  /* subtle border */
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 12px;
 }
