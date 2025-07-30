@@ -1,3 +1,4 @@
+/* ====== Global Styles & Reset ====== */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,63 +6,176 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  background-color: #000000;  /* black background */
-  color: #e0e0e0;             /* light grey text for better contrast */
+  background: linear-gradient(135deg, #000 0%, #111 100%);
+  color: #e0e0e0;
 }
 
+/* ====== Typography ====== */
+h1, h2, h3 {
+  color: #fff;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+p, span {
+  margin: 4px 0;
+}
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-  color: #c5c8c6;            /* softer light grey for code */
-  background-color: #1e1e1e; /* dark background for code blocks */
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  color: #c5c8c6;
+  background-color: #1e1e1e;
   padding: 2px 4px;
   border-radius: 4px;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-/* Additional helpful styles for links, buttons, etc. */
+/* ====== Links ====== */
 a {
-  color: #8ab4f8;              /* light blue links */
+  color: #8ab4f8;
   text-decoration: none;
 }
-a:hover {
+a:hover, a:focus {
   text-decoration: underline;
+  color: #a1caff;
+  outline: none;
 }
 
+/* ====== Layout Helpers ====== */
+* { box-sizing: border-box; }
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.flex-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.flex-item {
+  flex: 1 1 300px;
+}
+@media (max-width: 600px) {
+  .flex-row { flex-direction: column; }
+}
+
+/* ====== Cards ====== */
+.data-card {
+  background-color: #161616;
+  border: 1px solid #444;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  transition: box-shadow 0.3s, background-color 0.3s;
+}
+.data-card:hover {
+  box-shadow: 0 4px 12px rgba(0,255,0,0.12);
+}
+
+/* ====== Buttons ====== */
 button {
-  background-color: #111111;
+  background-color: #111;
   color: #e0e0e0;
-  border: 1px solid #444444;
-  padding: 8px 16px;
+  border: 1px solid #444;
+  padding: 12px 24px;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
-button:hover {
-  background-color: #222222;
+button:hover, button:focus {
+  background-color: #222;
+  box-shadow: 0 2px 8px #0a05;
+  outline: none;
+}
+button:disabled {
+  background-color: #333;
+  color: #777;
+  border-color: #555;
+  cursor: not-allowed;
 }
 
-/* Example classes you can use in your dashboard HTML/JSX */
+/* ====== Badges & Status Chips ====== */
+.badge {
+  border-radius: 12px;
+  padding: 3px 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-right: 8px;
+  display: inline-block;
+}
+.badge.buy { background: #052; color: #0f0; }
+.badge.short { background: #400; color: #f55; }
+.badge.active { background: #227; color: #8ab4f8; }
+.badge.error { background: #330; color: #ff0; }
 
+/* ====== Signals / Data Highlights ====== */
 .buy-signal {
-  color: #00ff00;             /* bright green */
+  color: #00ff00;
+  font-weight: 700;
+  text-shadow: 0 0 2px #00ff00;
 }
-
 .short-signal {
-  color: #ff4444;             /* red */
+  color: #ff4444;
+  font-weight: 700;
+  text-shadow: 0 0 2px #ff4444;
 }
-
 .neutral {
   color: #dcdcdc;
 }
 
-.data-card {
-  background-color: #121212;  /* dark card background */
-  border: 1px solid #333333;  /* subtle border */
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 12px;
+/* ====== Log/Entry Text ====== */
+.log-entry, .data-text {
+  color: #cccccc;
+  font-size: 0.92rem;
+  font-family: Consolas, monospace;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+/* ====== Header & Navigation ====== */
+.header {
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+  padding: 18px 32px;
+  border-bottom: 2px solid #222;
+}
+.navbar {
+  display: flex;
+  gap: 24px;
+  background: #141414;
+  padding: 12px 28px;
+  border-radius: 0 0 12px 12px;
+}
+
+/* ====== Inputs ====== */
+input, select {
+  background: #181818;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+/* ====== Toast/Notification ====== */
+.toast {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  background: #212121;
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px #000a;
+  animation: fadein 0.7s;
+  z-index: 9999;
+}
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(15px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+
+/* ====== Smooth Transitions ====== */
+button, .data-card, .badge {
+  transition: background-color 0.3s, box-shadow 0.3s, color 0.2s;
 }
