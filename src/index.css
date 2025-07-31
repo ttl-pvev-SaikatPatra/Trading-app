@@ -1,6 +1,5 @@
 html, body {
-  background: #181a1b; /* Or your preferred very dark gray */
-  color: #e5e5e5;
+  background: linerar-gradient (180deg,#6a82fb 0%, #fc5c7d 100%);
   min-height: 100vh;
 }
 
@@ -8,11 +7,13 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  background: #111214;        /* Very dark, neutral background */
-  color: #e5e5e5;
-  min-height: 100vh;
 }
-
+.dashboard-card {
+  background: rgba (20, 20, 20, 0.8);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px
+    rgba (0,0,0,0.15);
+}
 * {
   box-sizing: border-box;
 }
