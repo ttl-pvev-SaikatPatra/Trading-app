@@ -110,10 +110,13 @@ body {
 
 /* Profit/Loss subtle colors */
 .profit {
-  color: #49be89;
+  color: #49be89 !important; /* soft green, readable in dark mode */
+  font-weight: 600;
 }
+
 .loss {
-  color: #d07171;
+  color: #d07171 !important; /* soft red, readable in dark mode */
+  font-weight: 600;
 }
 
 /* Buttons */
