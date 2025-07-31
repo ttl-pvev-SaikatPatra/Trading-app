@@ -1,5 +1,8 @@
 html, body {
-  background: linerar-gradient (180deg,#6a82fb 0%, #fc5c7d 100%);
+  /* fallback background just in case */
+  background: #6a82fb;
+  background: linear-gradient(180deg, #6a82fb 0%, #fc5c7d 100%);
+  color: #e5e5e5;
   min-height: 100vh;
 }
 
@@ -9,10 +12,9 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 .dashboard-card {
-  background: rgba (20, 20, 20, 0.8);
+  background: rgba(20, 20, 20, 0.8);
   border-radius: 10px;
-  box-shadow: 0 4px 12px
-    rgba (0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 * {
   box-sizing: border-box;
