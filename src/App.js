@@ -190,6 +190,13 @@ function App() {
           </button>
 
           <button 
+            className="btn btn-primary"
+            onClick={() => controlBot('scan')}
+          >
+            🔄 Refresh Stock List & Scan
+          </button>
+
+          <button 
             className="btn btn-warning"
             onClick={() => controlBot('pause')}
           >
