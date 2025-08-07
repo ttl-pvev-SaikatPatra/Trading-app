@@ -1334,6 +1334,7 @@ if __name__ == "__main__":
     print("🔄 Keep-alive system started.")
 
     try:
+        port = int(os.environ.get("PORT", 5000))
         app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
     except Exception as e:
         print(f"❌ Flask server error: {e}")
