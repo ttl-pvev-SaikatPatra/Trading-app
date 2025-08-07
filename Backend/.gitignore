@@ -1,0 +1,12 @@
+# === Python / Flask / Trading Bot ignores ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+access_token.txt
+positions.json
+*.db
+instance/
+.env
+*.sqlite3
+.DS_Store
