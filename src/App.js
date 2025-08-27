@@ -1,112 +1,107 @@
-// src/App.js
 import React, { useEffect, useState } from "react";
 import "./index.css";
 
-const API = "http://localhost:5000"; // Flask backend
-
-export default function App() {
-  const [balance, setBalance] = useState(null);
-  const [pnl, setPnl] = useState({ realized: 0, unrealized: 0 });
-  const [positions, setPositions] = useState([]);
-  const [history, setHistory] = useState([]);
+function App() {
   const [status, setStatus] = useState({});
-  const [lastPing, setLastPing] = useState(null);
-
-  // Generic fetch helper
-  const fetchData = async (endpoint, setter) => {
-    try {
-      const res = await fetch(`${API}${endpoint}`);
-      const data = await res.json();
-      setter(data);
-    } catch (err) {
-      console.error(`Error fetching ${endpoint}:`, err);
-    }
-  };
+  const [token, setToken] = useState("");
+  const [countdown, setCountdown] = useState(900); // 15 min default
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchData("/balance", setBalance);
-    fetchData("/pnl", setPnl);
-    fetchData("/sessions/active", setPositions);
-    fetchData("/sessions/history", setHistory);
-    fetchData("/status", setStatus);
-    fetchData("/ping", (d) => setLastPing(d.time));
-
+    fetchStatus();
     const interval = setInterval(() => {
-      fetchData("/balance", setBalance);
-      fetchData("/pnl", setPnl);
-      fetchData("/sessions/active", setPositions);
-      fetchData("/status", setStatus);
-      fetchData("/ping", (d) => setLastPing(d.time));
-    }, 15000);
-
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 900));
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      setStatus(data);
+    } catch (err) {
+      setError("Failed to fetch status");
+    }
+  };
+
+  const authenticate = async () => {
+    try {
+      const res = await fetch("/session/exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_token: token }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error("Auth failed");
+      fetchStatus();
+    } catch (err) {
+      setError("Authentication failed");
+    }
+  };
+
   return (
-    <div className="app">
-      <header>
-        <h1>Trading Bot Dashboard</h1>
-        <span className={`status ${status.status === "running" ? "ok" : "stopped"}`}>
-          {status.status || "Unknown"}
-        </span>
-      </header>
+    <div className="container">
+      <h1>📈 Trading Bot Dashboard</h1>
 
-      <section className="card">
-        <h2>Account Balance</h2>
-        <p><strong>Cash:</strong> ₹{balance?.balance?.toFixed(2) || "--"}</p>
-        <p><strong>Equity:</strong> ₹{balance?.equity?.toFixed(2) || "--"}</p>
-        <p><strong>Max Positions:</strong> {balance?.max_positions || "--"}</p>
-      </section>
+      <div className="section">
+        <label>Request Token:</label>
+        <input value={token} onChange={(e) => setToken(e.target.value)} />
+        <button onClick={authenticate}>Authenticate</button>
+      </div>
 
-      <section className="card">
-        <h2>Today’s P&L</h2>
-        <p className="profit">Realized: ₹{pnl.realized.toFixed(2)}</p>
-        <p className="profit">Unrealized: ₹{pnl.unrealized.toFixed(2)}</p>
-        <p>Total Trades: {pnl.today_trades || "--"}</p>
-      </section>
+      <div className="section">
+        <p><strong>Bot Status:</strong> {status.bot_status}</p>
+        <p><strong>Balance:</strong> ₹{status.balance?.toFixed(2)}</p>
+        <p><strong>Daily PnL:</strong> ₹{status.daily_pnl?.toFixed(2)}</p>
+        <p><strong>Trades Today:</strong> {status.total_trades}</p>
+        <p><strong>Win Rate:</strong> {status.win_rate}%</p>
+        <p><strong>Market:</strong> {status.market_open ? "Open" : "Closed"}</p>
+        <p><strong>Next Trade In:</strong> {countdown}s</p>
+      </div>
 
-      <section className="card">
+      <div className="section">
         <h2>Active Positions</h2>
-        {positions.length === 0 ? <p>No open positions</p> : (
-          <table>
-            <thead>
-              <tr>
-                <th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>SL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {positions.map((pos, i) => (
-                <tr key={i}>
-                  <td>{pos.symbol}</td>
-                  <td>{pos.side}</td>
-                  <td>{pos.quantity}</td>
-                  <td>{pos.entry_price}</td>
-                  <td>{pos.stop_loss}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      <section className="card">
-        <h2>Trade History (Today)</h2>
-        {history.length === 0 ? <p>No trades yet</p> : (
+        {status.positions?.length ? (
           <ul>
-            {history.map((t, i) => (
-              <li key={i}>
-                {t.timestamp} — {t.symbol} {t.side} {t.quantity} @ {t.price}
+            {status.positions.map((pos) => (
+              <li key={pos.symbol}>
+                {pos.symbol} ({pos.transaction_type}) - Qty: {pos.quantity} - PnL: ₹{pos.pnl.toFixed(2)}
               </li>
             ))}
           </ul>
+        ) : (
+          <p>No active positions</p>
         )}
-      </section>
+      </div>
 
-      <footer>
-        <p><strong>Last Ping:</strong> {lastPing || "--"}</p>
-        <p><strong>Reason:</strong> {status.reason_no_trade}</p>
-        <p><strong>Next Scan:</strong> {status.next_scan}</p>
-      </footer>
+      <div className="section">
+        <h2>Keep-Alive Status</h2>
+        <KeepAlive />
+      </div>
+
+      {error && <p className="error">{error}</p>}
     </div>
   );
 }
+
+function KeepAlive() {
+  const [ping, setPing] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/health");
+        const data = await res.json();
+        setPing(`✅ ${data.status} at ${data.timestamp}`);
+      } catch {
+        setPing("❌ Keep-alive failed");
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <p>{ping}</p>;
+}
+
+export default App;
