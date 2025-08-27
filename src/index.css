@@ -1,66 +1,35 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f7f9fc;
+  background: #f4f4f4;
   margin: 0;
-  padding: 0;
-}
-
-.app {
-  max-width: 900px;
-  margin: auto;
   padding: 20px;
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.container {
+  max-width: 800px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
 }
 
-header h1 {
-  font-size: 1.5rem;
-  color: #222;
+.section {
+  margin-bottom: 20px;
 }
 
-.status.ok {
-  color: green;
-  font-weight: bold;
+input {
+  padding: 8px;
+  margin-right: 10px;
 }
 
-.status.stopped {
+button {
+  padding: 8px 12px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.error {
   color: red;
-  font-weight: bold;
-}
-
-.card {
-  background: #fff;
-  margin: 15px 0;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.card h2 {
-  margin-top: 0;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-table th, table td {
-  padding: 6px 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
-}
-
-.profit {
-  color: green;
-}
-
-footer {
-  margin-top: 20px;
-  font-size: 0.9rem;
-  color: #555;
 }
