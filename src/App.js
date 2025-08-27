@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from "react";
-import "./index.css";
+import "./App.css";
 
 function App() {
   const [status, setStatus] = useState({});
   const [token, setToken] = useState("");
   const [countdown, setCountdown] = useState(900); // 15 min default
   const [error, setError] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const ZERODHA_API_KEY = "your_actual_api_key"; // Replace with your Kite API key
+  const REDIRECT_URI = "http://localhost:3000"; // Replace with your deployed frontend URL
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestToken = params.get("request_token");
+    if (requestToken) {
+      setToken(requestToken);
+      authenticate(requestToken);
+    }
     fetchStatus();
     const interval = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 900));
@@ -25,30 +35,36 @@ function App() {
     }
   };
 
-  const authenticate = async () => {
+  const authenticate = async (requestToken) => {
     try {
       const res = await fetch("/session/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request_token: token }),
+        body: JSON.stringify({ request_token: requestToken }),
       });
       const data = await res.json();
       if (!data.success) throw new Error("Auth failed");
+      setAuthenticated(true);
       fetchStatus();
     } catch (err) {
       setError("Authentication failed");
     }
   };
 
+  const loginToZerodha = () => {
+    const url = `https://kite.trade/connect/login?api_key=${ZERODHA_API_KEY}&redirect_uri=${REDIRECT_URI}`;
+    window.location.href = url;
+  };
+
   return (
     <div className="container">
       <h1>📈 Trading Bot Dashboard</h1>
 
-      <div className="section">
-        <label>Request Token:</label>
-        <input value={token} onChange={(e) => setToken(e.target.value)} />
-        <button onClick={authenticate}>Authenticate</button>
-      </div>
+      {!authenticated && (
+        <div className="section">
+          <button onClick={loginToZerodha}>Login via Zerodha</button>
+        </div>
+      )}
 
       <div className="section">
         <p><strong>Bot Status:</strong> {status.bot_status}</p>
@@ -58,20 +74,36 @@ function App() {
         <p><strong>Win Rate:</strong> {status.win_rate}%</p>
         <p><strong>Market:</strong> {status.market_open ? "Open" : "Closed"}</p>
         <p><strong>Next Trade In:</strong> {countdown}s</p>
+        <p><strong>Reason for No Trade:</strong> {status.no_trade_reason}</p>
       </div>
 
       <div className="section">
         <h2>Active Positions</h2>
         {status.positions?.length ? (
           <ul>
-            {status.positions.map((pos) => (
-              <li key={pos.symbol}>
+            {status.positions.map((pos, index) => (
+              <li key={index}>
                 {pos.symbol} ({pos.transaction_type}) - Qty: {pos.quantity} - PnL: ₹{pos.pnl.toFixed(2)}
               </li>
             ))}
           </ul>
         ) : (
           <p>No active positions</p>
+        )}
+      </div>
+
+      <div className="section">
+        <h2>Trade Sessions</h2>
+        {status.trade_sessions?.length ? (
+          <ul>
+            {status.trade_sessions.map((session, index) => (
+              <li key={index}>
+                {session.time} - {session.symbol} - {session.transaction_type} - Qty: {session.quantity} - PnL: ₹{session.pnl.toFixed(2)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No trade sessions today</p>
         )}
       </div>
 
