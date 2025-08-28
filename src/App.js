@@ -32,14 +32,14 @@ const diffMs = next - now;
 const ss = Math.max(0, Math.floor(diffMs / 1000));
 const mm = Math.floor(ss / 60);
 const remS = ss % 60;
-return ${String(mm).padStart(2, "0")}:${String(remS).padStart(2, "0")};
+return `${String(mm).padStart(2, "0")}:${String(remS).padStart(2, "0")}`;
 }
 async function fetchJSON(path, options = {}) {
 const url = API_BASE + path;
 const headers = { "Content-Type": "application/json" };
 const body = options.body ? JSON.stringify(options.body) : undefined;
 const res = await fetch(url, { ...options, headers, body });
-if (!res.ok) throw new Error(HTTP ${res.status});
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
 return res.json();
 }
 function getQueryParam(name) {
