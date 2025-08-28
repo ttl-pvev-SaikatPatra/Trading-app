@@ -204,16 +204,3 @@ filter: blur(50px);
 .thead > div:nth-child(n+3), .trow > div:nth-child(n+3){ display:none }
 .table:not(.compact){ overflow-x:auto }
 }
-
-index.js (minimal; ensure only index.css is imported)
-import React from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App";
-
-const root = createRoot(document.getElementById("root"));
-root.render(
-<React.StrictMode>
-<App />
-</React.StrictMode>
-);
