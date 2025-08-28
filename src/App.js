@@ -463,3 +463,216 @@ return (
     <div className="muted">Zerodha Kite -  VWAP + EMA20 (MTF) + ATR -  MIS</div>
   </footer>
 </div>
+);
+}
+
+export default function App() {
+const [status, setStatus] = useState(null);
+const [universe, setUniverse] = useState({
+version: null,
+session_universe: [],
+universe: [],
+});
+const [health, setHealth] = useState(null);
+const [lastHealthAt, setLastHealthAt] = useState(null);
+const [note, setNote] = useState("");
+const [loading, setLoading] = useState(false);
+
+const [reqToken, setReqToken] = useState("");
+const [reqTokenMsg, setReqTokenMsg] = useState("");
+
+const todayTradesRef = useRef([]);
+const [todayTrades, setTodayTrades] = useState([]);
+const prevPositionsRef = useRef({});
+
+// Prefill request_token if in URL
+useEffect(() => {
+const rt = getQueryParam("request_token");
+if (rt && rt.length === 32) {
+setReqToken(rt);
+setReqTokenMsg("Token detected. Verify & Save.");
+}
+}, []);
+
+// Initial load
+useEffect(() => {
+(async () => {
+try {
+const [s, u, h] = await Promise.all([
+fetchJSON("/api/status").catch(() => null),
+fetchJSON("/api/universe").catch(() => ({
+session_universe: [],
+universe: [],
+version: null,
+})),
+fetchJSON("/health").catch(() => null),
+]);
+if (s) setStatus(s);
+if (u) setUniverse(u);
+if (h) {
+setHealth(h);
+setLastHealthAt(new Date());
+}
+} catch {
+setNote("Failed to load initial data");
+}
+})();
+}, []);
+
+// Poll status
+useEffect(() => {
+const t = setInterval(async () => {
+try {
+const s = await fetchJSON("/api/status");
+setStatus(s);
+updateStream(s.positions || []);
+} catch {}
+}, POLL_MS);
+return () => clearInterval(t);
+}, []);
+
+// Keep-alive
+useEffect(() => {
+const t = setInterval(async () => {
+try {
+const h = await fetchJSON("/health");
+setHealth(h);
+setLastHealthAt(new Date());
+} catch {
+setNote("Keep-alive failed");
+}
+}, HEALTH_PING_MS);
+return () => clearInterval(t);
+}, []);
+
+function updateStream(currPositions) {
+const prev = prevPositionsRef.current;
+const currMap = {};
+currPositions.forEach((p) => {
+const k = ${p.symbol}_${p.entry_time}_${p.quantity};
+currMap[k] = p;
+if (!prev[k]) {
+todayTradesRef.current = [
+{
+type: "ENTRY",
+ts: new Date().toISOString(),
+symbol: p.symbol,
+side: p.transaction_type,
+qty: p.quantity,
+price: p.buy_price,
+},
+...todayTradesRef.current,
+];
+}
+});
+Object.keys(prev).forEach((k) => {
+if (!currMap[k]) {
+const p = prev[k];
+todayTradesRef.current = [
+{
+type: "EXIT",
+ts: new Date().toISOString(),
+symbol: p.symbol,
+side: p.transaction_type,
+qty: p.quantity,
+price: p.current_price,
+},
+...todayTradesRef.current,
+];
+}
+});
+prevPositionsRef.current = currMap;
+setTodayTrades(todayTradesRef.current.slice(0, 50));
+}
+
+async function control(action) {
+setNote("");
+try {
+const resp = await fetchJSON(/control/${action});
+setNote(resp.status || "OK");
+if (action.includes("rebuild")) {
+const u = await fetchJSON("/api/universe");
+setUniverse(u);
+}
+} catch (e) {
+setNote("Action failed: " + e.message);
+}
+}
+async function closePosition(symbol) {
+setNote("");
+try {
+const resp = await fetchJSON("/api/close-position", {
+method: "POST",
+body: { symbol },
+});
+setNote(resp.message || "Close requested");
+} catch (e) {
+setNote("Close failed: " + e.message);
+}
+}
+function kiteLogin() {
+if (!BACKEND_URL) {
+setNote("Backend URL is not configured");
+return;
+}
+window.location.href = ${BACKEND_URL}/auth/login?next=/;
+}
+async function verifyToken() {
+setReqTokenMsg("");
+if (!reqToken || reqToken.length !== 32) {
+setReqTokenMsg("Enter a valid 32-character request_token.");
+return;
+}
+try {
+setLoading(true);
+const resp = await fetchJSON("/session/exchange", {
+method: "POST",
+body: { request_token: reqToken },
+});
+if (resp.success) {
+setReqTokenMsg("Verified. Session active.");
+const s = await fetchJSON("/api/status");
+setStatus(s);
+const url = new URL(window.location.href);
+if (url.searchParams.get("request_token")) {
+url.searchParams.delete("request_token");
+window.history.replaceState({}, "", url.toString());
+}
+} else {
+setReqTokenMsg("Verification failed.");
+}
+} catch (e) {
+setReqTokenMsg("Verification failed: " + e.message);
+} finally {
+setLoading(false);
+}
+}
+
+const s = status || {};
+const positions = s.positions || [];
+const isAuthed = !!s.access_token_valid && !s.auth_required;
+
+return (
+<div className="app gradient-bg">
+{!isAuthed ? (
+<AuthScreen onKiteLogin={kiteLogin} reqToken={reqToken} setReqToken={setReqToken} onVerify={verifyToken} loading={loading} message={reqTokenMsg} />
+) : (
+<>
+<AppHeader onPrimary={() => control("scan")} canScan={!s.auth_required && s.access_token_valid} />
+<Dashboard
+status={s}
+universe={universe}
+todayTrades={todayTrades}
+positions={positions}
+onScan={() => control("scan")}
+onPause={() => control("pause")}
+onResume={() => control("resume")}
+onRebuild={() => control("rebuild_and_scan")}
+onClosePosition={closePosition}
+note={note}
+/>
+</>
+)}
+</div>
+);
+}
