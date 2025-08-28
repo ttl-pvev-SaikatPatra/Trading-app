@@ -181,7 +181,7 @@ function KPI({ label, value, sub, posneg }) {
 return (
 <div className="kpi card hover">
 <div className="kpi-label">{label}</div>
-<div className={kpi-value ${posneg || ""}}>{value}</div>
+<div className={`kpi-value ${posneg || ""}`}>{value}</div>
 {sub ? <div className="kpi-sub muted">{sub}</div> : null}
 </div>
 );
