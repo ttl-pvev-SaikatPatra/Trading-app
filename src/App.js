@@ -102,7 +102,7 @@ return (
 {items.map((it) => (
 <button
 key={it.value}
-className={tab ${value === it.value ? "active" : ""}}
+className={`tab ${value === it.value ? "active" : ""}`}
 onClick={() => onChange(it.value)}
 >
 {it.icon ? <span className="tab-ico">{it.icon}</span> : null}
