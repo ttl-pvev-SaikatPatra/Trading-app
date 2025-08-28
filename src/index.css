@@ -1,6 +1,6 @@
-/* ================== Design tokens ================== */
-:root {
-/* Dark theme defaults (light overrides below) */
+/* ================== Design tokens ================== /
+:root{
+/ Dark theme defaults (light overrides below) */
 --bg:#0b1020;
 --bg-2:#0e1328;
 --text:#e8eaf0;
@@ -297,15 +297,3 @@ display:none;
 .table:not(.compact){ overflow-x:auto; }
 }
 
-Now ensure src/index.js is a separate JS file like this (do not paste into CSS):
-import React from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App";
-
-const root = createRoot(document.getElementById("root"));
-root.render(
-<React.StrictMode>
-<App />
-</React.StrictMode>
-);
