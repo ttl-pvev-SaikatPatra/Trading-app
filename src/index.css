@@ -1,6 +1,6 @@
 /* ================== Design tokens ================== /
 :root{
-/ Palettes (light by default via data-theme=light) will be overridden below in html[data-theme="light"] */
+/ Dark theme defaults (light overrides below) */
 --bg:#0b1020;
 --bg-2:#0e1328;
 --text:#e8eaf0;
@@ -32,7 +32,7 @@
 --space-20:20px;
 --space-24:24px;
 --space-32:32px;
-}
+} /* ← this closes :root exactly once */
 
 /* Light theme override */
 html[data-theme="light"]{
