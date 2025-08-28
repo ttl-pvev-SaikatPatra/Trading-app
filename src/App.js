@@ -614,7 +614,7 @@ if (!BACKEND_URL) {
 setNote("Backend URL is not configured");
 return;
 }
-window.location.href = ${BACKEND_URL}/auth/login?next=/;
+window.location.href = `${BACKEND_URL}/auth/login?next=/`;
 }
 async function verifyToken() {
 setReqTokenMsg("");
