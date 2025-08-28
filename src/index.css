@@ -1,6 +1,6 @@
 /* ================== Design tokens ================== */
 :root {
-/ Dark theme defaults (light overrides below) */
+/* Dark theme defaults (light overrides below) */
 --bg:#0b1020;
 --bg-2:#0e1328;
 --text:#e8eaf0;
