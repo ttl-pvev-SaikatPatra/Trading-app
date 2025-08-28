@@ -115,7 +115,7 @@ onClick={() => onChange(it.value)}
 
 function SectionCard({ title, subtitle, children, actions, tone }) {
 return (
-<section className={card section ${tone || ""}}>
+<section className={`card section ${tone || ""}`}>
 <div className="section-head">
 <div>
 <h3>{title}</h3>
