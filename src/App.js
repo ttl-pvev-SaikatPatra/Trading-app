@@ -587,7 +587,7 @@ setTodayTrades(todayTradesRef.current.slice(0, 50));
 async function control(action) {
 setNote("");
 try {
-const resp = await fetchJSON(/control/${action});
+const resp = await fetchJSON(`/control/${action}`);
 setNote(resp.status || "OK");
 if (action.includes("rebuild")) {
 const u = await fetchJSON("/api/universe");
