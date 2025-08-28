@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "";
-const BACKEND_URL = API_BASE; // for /auth/login redirect
+const API_BASE = process.env.REACT_APP_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const BACKEND_URL = API_BASE;
 const POLL_MS = 5000;
 const HEALTH_PING_MS = 120000;
 const SCAN_INTERVAL_MIN = 15;
@@ -40,6 +40,10 @@ async function fetchJSON(path, options = {}) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
 
 export default function App() {
   const [status, setStatus] = useState(null);
@@ -48,11 +52,26 @@ export default function App() {
   const [lastHealthAt, setLastHealthAt] = useState(null);
   const [countdown, setCountdown] = useState(nextScanCountdown());
   const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // New: request_token capture and submission state
+  const [reqToken, setReqToken] = useState("");
+  const [reqTokenMsg, setReqTokenMsg] = useState("");
+
   const todayTradesRef = useRef([]);
   const [todayTrades, setTodayTrades] = useState([]);
   const prevPositionsRef = useRef({});
 
-  // Load
+  // Prefill request_token if present in the URL (useful when the frontend is the redirect URL during local dev)
+  useEffect(() => {
+    const rt = getQueryParam("request_token");
+    if (rt && rt.length === 32) {
+      setReqToken(rt);
+      setReqTokenMsg("Request token detected from URL. Click Verify & Save.");
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
     const load = async () => {
       try {
@@ -64,7 +83,9 @@ export default function App() {
         if (s) setStatus(s);
         if (u) setUniverse(u);
         if (h) { setHealth(h); setLastHealthAt(new Date()); }
-      } catch {}
+      } catch (e) {
+        setNote("Failed to load initial data");
+      }
     };
     load();
   }, []);
@@ -156,9 +177,45 @@ export default function App() {
     } catch (e) { setNote("Close failed: " + e.message); }
   }
 
+  // New: Start OAuth on backend (redirect to Zerodha)
   function kiteLogin() {
-    // server-managed OAuth flow
+    if (!BACKEND_URL) {
+      setNote("Backend URL is not configured");
+      return;
+    }
     window.location.href = `${BACKEND_URL}/auth/login?next=/`;
+  }
+
+  // New: Submit a pasted 32-char request_token to backend to exchange and store access_token
+  async function submitRequestToken(e) {
+    e.preventDefault();
+    setReqTokenMsg("");
+    if (!reqToken || reqToken.length !== 32) {
+      setReqTokenMsg("Enter a valid 32-character request_token.");
+      return;
+    }
+    try {
+      setLoading(true);
+      const resp = await fetchJSON("/session/exchange", { method: "POST", body: { request_token: reqToken } });
+      if (resp.success) {
+        setReqTokenMsg("Verified and saved. Session active.");
+        // Refresh status so UI updates instantly
+        const s = await fetchJSON("/api/status");
+        setStatus(s);
+        // Optionally strip request_token from URL if it exists
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("request_token")) {
+          url.searchParams.delete("request_token");
+          window.history.replaceState({}, "", url.toString());
+        }
+      } else {
+        setReqTokenMsg("Verification failed.");
+      }
+    } catch (e) {
+      setReqTokenMsg("Verification failed: " + e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const s = status || {};
@@ -179,9 +236,23 @@ export default function App() {
       </header>
 
       {(s.auth_required || !s.access_token_valid) && (
-        <div className="banner warn">
-          <div>Authentication required to continue trading.</div>
-          <button className="btn accent" onClick={kiteLogin}>Connect Zerodha</button>
+        <div className="banner warn" style={{ display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div>Authentication required to continue trading.</div>
+            <button className="btn accent" onClick={kiteLogin}>Connect Zerodha</button>
+          </div>
+
+          <form className="req-form" onSubmit={submitRequestToken} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input
+              placeholder="Paste 32-char request_token"
+              value={reqToken}
+              onChange={(e) => setReqToken(e.target.value.trim())}
+              maxLength={64}
+              style={{ flex: 1, minWidth: 260 }}
+            />
+            <button className="btn" type="submit" disabled={loading}>Verify & Save</button>
+          </form>
+          {reqTokenMsg && <div className="muted">{reqTokenMsg}</div>}
         </div>
       )}
 
@@ -190,7 +261,7 @@ export default function App() {
       <section className="grid">
         <div className="card kpi">
           <div className="kpi-label">Available Balance</div>
-          <div className={`kpi-value ${dailyPnL >= 0 ? "" : ""}`}>{inr(s.balance)}</div>
+          <div className="kpi-value">{inr(s.balance)}</div>
           <div className="kpi-sub muted">Updated {s.last_update || "—"}</div>
         </div>
 
@@ -226,11 +297,11 @@ export default function App() {
           <button className="btn" onClick={() => control("scan")} disabled={s.auth_required || !s.access_token_valid}>Scan now</button>
           <button className="btn" onClick={() => control("pause")}>Pause</button>
           <button className="btn" onClick={() => control("resume")}>Resume</button>
-          <button className="btn" onClick={() => control("rebuild_and_scan")}>Rebuild + Scan</button>
+          <button className="btn" onClick={() => control("rebuild_and_scan")} disabled={s.auth_required || !s.access_token_valid}>Rebuild + Scan</button>
         </div>
         <div className="controls-right">
           <button className="btn subtle" onClick={() => control("scan")}>Refresh</button>
-          <button className="btn subtle" onClick={async () => { await fetchJSON("/backtest/run", { method: "POST" }); }}>Run Backtest</button>
+          <button className="btn subtle" onClick={async () => { await fetchJSON("/backtest/run", { method: "POST" }); setNote("Backtest started"); }}>Run Backtest</button>
           <button className="btn subtle" onClick={() => window.open(API_BASE + "/backtest/csv", "_blank")}>Download CSV</button>
         </div>
       </section>
@@ -263,7 +334,7 @@ export default function App() {
                   <div>{inr(p.target_price)}</div>
                   <div>{inr(p.stop_loss_price)}</div>
                   <div className="mono">{p.entry_time}</div>
-                  <div><button className="btn danger" onClick={() => closePosition(p.symbol)}>Close</button></div>
+                  <div><button className="btn danger" onClick={() => closePosition(p.symbol)} disabled={s.auth_required || !s.access_token_valid}>Close</button></div>
                 </div>
               );
             })}
