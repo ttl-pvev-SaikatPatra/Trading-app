@@ -1,299 +1,1953 @@
-/* ================== Design tokens ================== /
+/* ================== Design tokens ================== */
+
 :root{
-/ Dark theme defaults (light overrides below) */
+
+/* Dark theme defaults (light overrides below) */
+
 --bg:#0b1020;
+
 --bg-2:#0e1328;
+
 --text:#e8eaf0;
+
 --muted:#9aa3b2;
+
 --card:#121735;
+
 --card-2:#171d3f;
+
 --border:rgba(255,255,255,0.08);
+
 --primary:#6b7bff;
+
 --primary-hov:#5a6af2;
+
 --success:#2bd177;
+
 --success-hov:#22ba69;
+
 --danger:#ff5577;
+
 --danger-hov:#ef496b;
+
 --warn:#f7b500;
 
+
+
 --ok:#2bd177;
+
 --bad:#ff5a5a;
 
+
+
 --shadow: 0 12px 36px rgba(0,0,0,.35);
+
 --inner: inset 0 1px 0 rgba(255,255,255,0.05);
+
 --blur: blur(14px);
+
 --radius: 14px;
 
+
+
 --space-6:6px;
+
 --space-8:8px;
+
 --space-10:10px;
+
 --space-12:12px;
+
 --space-16:16px;
+
 --space-20:20px;
+
 --space-24:24px;
+
 --space-32:32px;
+
 } /* ← this closes :root exactly once */
 
+
+
 /* Light theme override */
+
 html[data-theme="light"]{
+
 --bg:#f6f7fb;
+
 --bg-2:#eef1f9;
+
 --text:#1b1f2a;
+
 --muted:#5b6475;
+
 --card:#ffffff;
+
 --card-2:#fdfefe;
+
 --border:rgba(16,24,40,0.12);
+
 --primary:#3b5bff;
+
 --primary-hov:#304de6;
+
 --success:#16a34a;
+
 --success-hov:#15803d;
+
 --danger:#e5484d;
+
 --danger-hov:#d0363d;
+
 --ok:#16a34a;
+
 --bad:#e5484d;
+
 --shadow: 0 8px 28px rgba(16,24,40,0.12);
+
 --inner: inset 0 1px 0 rgba(16,24,40,0.04);
+
 }
+
+
 
 /* ================== Base ================== */
+
 *{ box-sizing:border-box; }
+
 html, body, #root{ height:100%; }
+
 body{
+
 margin:0;
+
 background:var(--bg);
+
 color:var(--text);
+
 font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+
 -webkit-font-smoothing: antialiased;
+
 -moz-osx-font-smoothing: grayscale;
+
 }
+
+
 
 .app{
+
 max-width:1200px;
+
 margin:0 auto;
+
 padding: var(--space-16);
+
 position:relative;
+
 }
+
+
 
 .gradient-bg::before{
+
 content:"";
+
 position:fixed;
+
 inset:-20% -10% auto -10%;
+
 height:55vh;
+
 background:
+
 radial-gradient(60% 80% at 20% 20%, rgba(107,123,255,.35), transparent 60%),
+
 radial-gradient(50% 70% at 80% 0%, rgba(255,85,119,.25), transparent 65%),
+
 radial-gradient(30% 40% at 50% 40%, rgba(43,209,119,.2), transparent 70%);
+
 filter: blur(40px);
+
 z-index:-2;
+
 pointer-events:none;
+
 }
+
+
 
 .muted{ color:var(--muted); }
+
 .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }
+
 .one-line{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
 .ok{ color:var(--ok); font-weight:700; }
+
 .bad{ color:var(--bad); font-weight:700; }
+
 .center{ text-align:center; }
 
+
+
 /* ================== Buttons ================== */
+
 .btn{
+
 border:1px solid var(--border);
+
 border-radius:12px;
+
 background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--card-2);
+
 color:var(--text);
+
 min-height:44px;
+
 padding:10px 14px;
+
 cursor:pointer;
+
 font-size:14px;
+
 line-height:20px;
+
 box-shadow: var(--inner), 0 2px 0 rgba(255,255,255,.02);
+
 transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+
 touch-action: manipulation;
+
 }
+
 .btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,.25), var(--inner); }
+
 .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
 .btn.primary{
+
 background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.06)), var(--primary);
+
 color:#fff; border-color:transparent;
+
 }
+
 .btn.primary:hover{ background: var(--primary-hov); }
+
 .btn.success{
+
 background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.06)), var(--success);
+
 color:#fff; border-color:transparent;
+
 }
+
 .btn.success:hover{ background: var(--success-hov); }
+
 .btn.secondary{
+
 background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.06)), #6f86ff1a;
+
 color:#dfe6ff; border-color:#6f86ff3d;
+
 }
+
 html[data-theme="light"] .btn.secondary{ color:#1e2a78; }
+
 .btn.ghost{
+
 background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--card-2);
+
 color:var(--text);
+
 }
+
 .btn.danger{
+
 background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.06)), var(--danger);
+
 color:#fff; border-color:transparent;
+
 }
+
 .btn.danger:hover{ background: var(--danger-hov); }
+
 .wide{ width:100%; }
 
+
+
 /* ================== Inputs ================== */
+
 .input{
+
 width:100%;
+
 min-width:260px;
+
 border:1px solid var(--border);
+
 border-radius:12px;
+
 padding:12px 12px;
+
 font-size:14px;
+
 background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--card);
+
 color:var(--text);
+
 }
+
+
 
 /* ================== Visual effects ================== */
+
 .glass{
+
 background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.06)), var(--card);
+
 border:1px solid var(--border);
+
 box-shadow: var(--shadow), var(--inner);
+
 backdrop-filter: var(--blur);
+
 }
+
 .pop{ animation: pop .25s ease-out both; }
+
 @keyframes pop{ from{ transform: scale(.985); opacity:.0; } to{ transform: scale(1); opacity:1; } }
+
 .hover{ transition: transform .2s ease, box-shadow .2s ease; }
+
 .hover:hover{ transform: translateY(-2px); box-shadow: 0 18px 36px rgba(0,0,0,.26); }
 
-/* ================== App Header ================== */
+
+
 .app-header{
+
 display:flex; align-items:center; justify-content:space-between;
+
 gap:12px; padding:12px 16px; border-radius:16px; margin-bottom:12px;
+
 }
+
 .brand-box{ display:flex; gap:12px; align-items:center; }
+
 .logo{ width:28px; height:28px; border-radius:8px; }
+
 .logo.lg{ width:40px; height:40px; }
+
 .brand-meta{ display:flex; flex-direction:column; gap:2px; }
+
 .brand-title{ font-weight:900; letter-spacing:.2px; font-size:18px; }
+
 .brand-sub{ font-size:12px; color:var(--muted); }
+
 .header-actions{ display:flex; gap:8px; flex-wrap:wrap; }
 
+
+
 /* ================== Tabs ================== */
+
 .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+
 .tab{
+
 padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+
 background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--card-2);
+
 cursor:pointer; font-size:14px; min-height:40px; color:var(--text);
+
 transition: transform .15s ease, background .2s ease;
+
 }
+
 .tab-ico{ margin-right:6px; }
+
 .tab.active{
+
 background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(0,0,0,.1)), var(--primary);
+
 border-color: transparent; color:#fff;
+
 transform: translateY(-1px);
+
 }
+
+
 
 /* ================== Cards & Sections ================== */
+
 .card{
+
 border:1px solid var(--border);
+
 border-radius:16px;
+
 padding:16px;
+
 background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.04)), var(--card);
+
 box-shadow: var(--shadow), var(--inner);
+
 }
+
 .section{ margin-top:12px; }
+
 .section.accent{
+
 background: linear-gradient(180deg, rgba(107,123,255,.12), rgba(107,123,255,.02)), var(--card);
+
 }
+
 .section-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+
 .section-actions{ display:flex; gap:8px; flex-wrap:wrap; }
 
+
+
 /* ================== KPIs (Bento) ================== */
+
 .bento{
+
 display:grid; gap:12px;
+
 grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
 }
+
 .kpi .kpi-label{ font-size:12px; color:var(--muted); }
+
 .kpi .kpi-value{ font-size:24px; font-weight:900; letter-spacing:.2px; margin-top:4px; }
+
 .kpi .kpi-value.pos{ color:var(--ok); }
+
 .kpi .kpi-value.neg{ color:var(--bad); }
+
 .kpi .kpi-sub{ font-size:12px; color:var(--muted); margin-top:4px; }
+
 .pill{
+
 display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px;
+
 background:rgba(255,255,255,.06); border:1px solid var(--border);
+
 }
+
+
 
 /* ================== Toast ================== */
+
 .toast{
+
 position: sticky; top: 12px; z-index: 10;
+
 border:1px solid rgba(43,209,119,.3);
+
 background: linear-gradient(180deg, rgba(43,209,119,.12), rgba(43,209,119,.08)), var(--card);
+
 color:#d9ffe9; border-radius:12px; padding:10px 12px; margin:12px 0;
+
 box-shadow: var(--shadow), var(--inner);
+
 }
+
+
 
 /* ================== Auth Hero ================== */
+
 .auth-hero{ min-height:calc(100vh - 32px); position:relative; display:grid; place-items:center; padding:16px; }
+
 .hero-bg{
+
 position:absolute; inset:0; z-index:-1;
+
 background:
+
 radial-gradient(40% 50% at 20% 20%, rgba(107,123,255,.35), transparent 60%),
+
 radial-gradient(30% 40% at 80% 0%, rgba(255,85,119,.25), transparent 60%),
+
 radial-gradient(25% 35% at 50% 60%, rgba(43,209,119,.2), transparent 70%);
+
 filter: blur(50px);
+
 }
+
 .auth-card{ max-width:560px; width:96%; border-radius:20px; padding:20px; }
+
 .auth-brand-row{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+
 .auth-title{ font-weight:900; font-size:20px; }
+
 .auth-sub{ margin-bottom:12px; }
+
 .auth-actions{ display:flex; flex-direction:column; gap:10px; }
+
 .auth-divider{ text-align:center; color:var(--muted); font-size:12px; }
+
 .auth-form{ display:flex; flex-direction:column; gap:8px; }
 
+
+
 /* ================== Tables ================== */
+
 .table{ display:grid; row-gap:6px; }
+
 .thead, .trow{
+
 display:grid;
+
 grid-template-columns: repeat(11, minmax(90px, 1fr));
+
 column-gap:8px;
+
 }
+
 .thead > div{
+
 font-weight:800; font-size:13px; background:rgba(255,255,255,.06);
+
 padding:8px; border-radius:10px;
+
 }
+
 .trow > div{
+
 padding:8px; border-bottom:1px solid var(--border);
+
 font-size:13px;
+
 }
+
 .table.compact .thead, .table.compact .trow{
+
 grid-template-columns: repeat(5, minmax(100px, 1fr));
+
 }
+
+
 
 /* ================== Activity ================== */
+
 .log{ list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+
 .log li{
+
 display:flex; align-items:center; gap:10px; padding:8px 0;
+
 border-bottom:1px solid var(--border); font-size:13px;
+
 }
+
 .chip{ padding:4px 8px; border-radius:8px; color:#fff; font-weight:800; font-size:12px; }
+
 .chip.pos{ background:var(--ok); }
+
 .chip.warn{ background:var(--warn); }
 
+
+
 /* ================== Actions layout ================== */
+
 .actions-row{ display:flex; gap:8px; flex-wrap:wrap; }
+
 .actions-grid{ display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 
+
+
 /* ================== Footer ================== */
+
 .footer{ margin:24px 0 8px; text-align:center; color:var(--muted); font-size:13px; }
 
+
+
 /* ================== Responsive ================== */
+
 @media (max-width: 768px){
+
 .tabs{ gap:6px; }
+
 .tab{ min-height:40px; }
+
 .thead, .trow{
+
 grid-template-columns: repeat(2, minmax(140px, 1fr));
-}
-.thead > div:nth-child(n+3),
-.trow > div:nth-child(n+3){
-display:none;
-}
-.table:not(.compact){ overflow-x:auto; }
+
 }
 
+.thead > div:nth-child(n+3),
+
+.trow > div:nth-child(n+3){
+
+display:none;
+
+}
+
+.table:not(.compact){ overflow-x:auto; }
+
+}
+
+
+
+
+
+root.render(
+
+);
+
+
+
+
+
+
+
+
+
+const API_BASE =
+
+process.env.REACT_APP_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+
+const BACKEND_URL = API_BASE;
+
+const POLL_MS = 5000;
+
+const HEALTH_PING_MS = 120000;
+
+const SCAN_INTERVAL_MIN = 15;
+
+
+
+// Utilities
+
+function inr(n) {
+
+if (n === null || n === undefined) return "—";
+
+return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+}
+
+function pct(n) {
+
+if (n === null || n === undefined) return "—";
+
+return Number(n).toFixed(2) + "%";
+
+}
+
+function nextScanCountdown() {
+
+const now = new Date();
+
+const m = now.getMinutes();
+
+const nextBlockMin =
+
+Math.ceil((m + 0.0001) / SCAN_INTERVAL_MIN) * SCAN_INTERVAL_MIN;
+
+const next = new Date(now);
+
+next.setSeconds(0, 0);
+
+if (nextBlockMin >= 60) {
+
+next.setHours(next.getHours() + 1);
+
+next.setMinutes(0);
+
+} else {
+
+next.setMinutes(nextBlockMin);
+
+}
+
+const diffMs = next - now;
+
+const ss = Math.max(0, Math.floor(diffMs / 1000));
+
+const mm = Math.floor(ss / 60);
+
+const remS = ss % 60;
+
+return ${String(mm).padStart(2, "0")}:${String(remS).padStart(2, "0")};
+
+}
+
+async function fetchJSON(path, options = {}) {
+
+const url = API_BASE + path;
+
+const headers = { "Content-Type": "application/json" };
+
+const body = options.body ? JSON.stringify(options.body) : undefined;
+
+const res = await fetch(url, { ...options, headers, body });
+
+if (!res.ok) throw new Error(HTTP ${res.status});
+
+return res.json();
+
+}
+
+function getQueryParam(name) {
+
+const params = new URLSearchParams(window.location.search);
+
+return params.get(name);
+
+}
+
+
+
+function ThemeToggle() {
+
+const [dark, setDark] = useState(() => {
+
+try {
+
+return (
+
+window.matchMedia &&
+
+window.matchMedia("(prefers-color-scheme: dark)").matches
+
+);
+
+} catch {
+
+return false;
+
+}
+
+});
+
+useEffect(() => {
+
+document.documentElement.dataset.theme = dark ? "dark" : "light";
+
+}, [dark]);
+
+return (
+
+<button className="btn ghost" onClick={() => setDark((v) => !v)} aria-label="Toggle theme">
+
+{dark ? "🌙" : "☀️"}
+
+</button>
+
+);
+
+}
+
+
+
+return (
+
+<header className="app-header glass">
+
+<div className="brand-box">
+
+<img
+
+className="logo"
+
+alt="Logo"
+
+src="/logo.svg"
+
+onError={(e) => {
+
+e.currentTarget.style.display = "none";
+
+}}
+
+/>
+
+<div className="brand-meta">
+
+<div className="brand-title">Nimbus Trader</div>
+
+<div className="brand-sub">Fast. Calm. Precise.</div>
+
+</div>
+
+</div>
+
+<div className="header-actions">
+
+<ThemeToggle />
+
+<button className="btn primary" onClick={onPrimary} disabled={!canScan}>
+
+Scan now
+
+</button>
+
+</div>
+
+</header>
+
+);
+
+}
+
+
+
+function Tabs({ value, onChange, items }) {
+
+return (
+
+<div className="tabs">
+
+{items.map((it) => (
+
+<button
+
+key={it.value}
+
+className={tab ${value === it.value ? "active" : ""}}
+
+onClick={() => onChange(it.value)}
+
+>
+
+{it.icon ? <span className="tab-ico">{it.icon}</span> : null}
+
+{it.label}
+
+</button>
+
+))}
+
+</div>
+
+);
+
+}
+
+
+
+function SectionCard({ title, subtitle, children, actions, tone }) {
+
+return (
+
+<section className={card section ${tone || ""}}>
+
+<div className="section-head">
+
+<div>
+
+<h3>{title}</h3>
+
+{subtitle ? <div className="muted one-line">{subtitle}</div> : null}
+
+</div>
+
+{actions ? <div className="section-actions">{actions}</div> : null}
+
+</div>
+
+{children}
+
+</section>
+
+);
+
+}
+
+
+
+function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, message }) {
+
+return (
+
+<div className="auth-hero">
+
+<div className="hero-bg" />
+
+<div className="auth-card glass pop">
+
+<div className="auth-brand-row">
+
+<img
+
+className="logo lg"
+
+alt="Logo"
+
+src="/logo.svg"
+
+onError={(e) => {
+
+e.currentTarget.style.display = "none";
+
+}}
+
+/>
+
+<div className="auth-title">Welcome to Nimbus Trader</div>
+
+</div>
+
+<div className="auth-sub muted">
+
+Authenticate to start secure trading with Zerodha.
+
+</div>
+
+<div className="auth-actions">
+
+<button className="btn success wide" onClick={onKiteLogin}>
+
+Connect Zerodha
+
+</button>
+
+<div className="auth-divider">or paste request_token</div>
+
+<form
+
+className="auth-form"
+
+onSubmit={(e) => {
+
+e.preventDefault();
+
+onVerify();
+
+}}
+
+>
+
+<input
+
+className="input"
+
+placeholder="32-char request_token"
+
+value={reqToken}
+
+onChange={(e) => setReqToken(e.target.value.trim())}
+
+maxLength={64}
+
+/>
+
+<button className="btn secondary wide" type="submit" disabled={loading}>
+
+Verify & Save
+
+</button>
+
+</form>
+
+{message ? <div className="muted center">{message}</div> : null}
+
+</div>
+
+</div>
+
+</div>
+
+);
+
+}
+
+
+
+function KPI({ label, value, sub, posneg }) {
+
+return (
+
+<div className="kpi card hover">
+
+<div className="kpi-label">{label}</div>
+
+<div className={kpi-value ${posneg || ""}}>{value}</div>
+
+{sub ? <div className="kpi-sub muted">{sub}</div> : null}
+
+</div>
+
+);
+
+}
+
+
+
+function Dashboard({
+
+status,
+
+universe,
+
+todayTrades,
+
+positions,
+
+onScan,
+
+onPause,
+
+onResume,
+
+onRebuild,
+
+onClosePosition,
+
+note,
+
+}) {
+
+const [tab, setTab] = useState("overview");
+
+const [expandPositions, setExpandPositions] = useState(false);
+
+const [expandUniverse, setExpandUniverse] = useState(false);
+
+const dailyPnL = status.daily_pnl ?? 0;
+
+
+
+const reason = useMemo(() => {
+
+const s = status;
+
+if (!s) return "Loading status…";
+
+if (s.auth_required || !s.access_token_valid) return "Authentication required";
+
+if (!s.market_open) return "Market closed";
+
+if (s.bot_status === "Paused") return "Bot paused";
+
+if ((s.positions || []).length >= (s.max_positions || 0)) return "Max positions reached";
+
+if (!universe.session_universe || universe.session_universe.length === 0) return "Watchlist empty";
+
+return "No qualifying signal";
+
+}, [status, universe]);
+
+
+
+return (
+
+<div className="dashboard">
+
+{note && <div className="toast pop">{note}</div>}
+
+
+
+  <Tabs
+
+    value={tab}
+
+    onChange={setTab}
+
+    items={[
+
+      { value: "overview", label: "Overview", icon: "🏠" },
+
+      { value: "positions", label: "Positions", icon: "📈" },
+
+      { value: "universe", label: "Universe", icon: "🛰️" },
+
+      { value: "activity", label: "Activity", icon: "🧭" },
+
+      { value: "controls", label: "Controls", icon: "⚙️" },
+
+    ]}
+
+  />
+
+
+
+  {tab === "overview" && (
+
+    <>
+
+      <div className="bento">
+
+        <KPI
+
+          label="Available Balance"
+
+          value={inr(status.balance)}
+
+          sub={`Updated ${status.last_update || "—"}`}
+
+        />
+
+        <KPI
+
+          label="Daily PnL"
+
+          value={inr(dailyPnL)}
+
+          sub={`Trades ${status.total_trades ?? 0}`}
+
+          posneg={dailyPnL >= 0 ? "pos" : "neg"}
+
+        />
+
+        <div className="card hover">
+
+          <div className="kpi-label">Bot / Market</div>
+
+          <div className="kpi-value">
+
+            <span className={`pill ${status.market_open ? "ok" : "bad"}`}>
+
+              {status.market_open ? "Market Open" : "Market Closed"}
+
+            </span>
+
+            <span className="divider" />
+
+            <span className="muted">{status.bot_status || "—"}</span>
+
+          </div>
+
+          <div className="kpi-sub muted">Reason: {reason}</div>
+
+        </div>
+
+        <div className="card hover">
+
+          <div className="kpi-label">Risk & Limits</div>
+
+          <div className="kpi-value">
+
+            <span>
+
+              Risk/trade: <b>{pct((status.risk_per_trade || 0) * 100)}</b>
+
+            </span>
+
+            <span className="divider" />
+
+            <span>
+
+              Max positions: <b>{status.max_positions ?? "—"}</b>
+
+            </span>
+
+          </div>
+
+          <div className="kpi-sub muted">Active: {(status.positions || []).length}</div>
+
+        </div>
+
+      </div>
+
+
+
+      <SectionCard title="Quick Actions" subtitle="Run a scan or manage the bot">
+
+        <div className="actions-row">
+
+          <button
+
+            className="btn primary"
+
+            onClick={onScan}
+
+            disabled={status.auth_required || !status.access_token_valid}
+
+          >
+
+            Scan now
+
+          </button>
+
+          <button className="btn ghost" onClick={onPause}>
+
+            Pause
+
+          </button>
+
+          <button className="btn ghost" onClick={onResume}>
+
+            Resume
+
+          </button>
+
+          <button
+
+            className="btn ghost"
+
+            onClick={onRebuild}
+
+            disabled={status.auth_required || !status.access_token_valid}
+
+          >
+
+            Rebuild + Scan
+
+          </button>
+
+        </div>
+
+      </SectionCard>
+
+    </>
+
+  )}
+
+
+
+  {tab === "positions" && (
+
+    <SectionCard
+
+      title={`Active Positions (${positions.length})`}
+
+      subtitle={positions.length ? "Tap Expand for full details" : "No active positions"}
+
+      actions={
+
+        positions.length ? (
+
+          <button className="btn ghost" onClick={() => setExpandPositions((v) => !v)}>
+
+            {expandPositions ? "Collapse" : "Expand"}
+
+          </button>
+
+        ) : null
+
+      }
+
+    >
+
+      {!positions.length ? (
+
+        <div className="empty">No active positions</div>
+
+      ) : (
+
+        <div className={`table ${expandPositions ? "" : "compact"}`}>
+
+          <div className="thead">
+
+            <div>Symbol</div>
+
+            <div>Side</div>
+
+            <div>Qty</div>
+
+            <div>Entry</div>
+
+            <div>Current</div>
+
+            <div>PnL</div>
+
+            <div>PnL %</div>
+
+            <div>Target</div>
+
+            <div>Stop</div>
+
+            <div>Since</div>
+
+            <div>Action</div>
+
+          </div>
+
+          {positions.map((p, i) => {
+
+            const ok = (p.pnl ?? 0) >= 0;
+
+            return (
+
+              <div className="trow" key={i}>
+
+                <div>{p.symbol}</div>
+
+                <div>{p.transaction_type}</div>
+
+                <div>{p.quantity}</div>
+
+                <div>{inr(p.buy_price)}</div>
+
+                <div>{inr(p.current_price)}</div>
+
+                <div className={ok ? "pos" : "neg"}>{inr(p.pnl)}</div>
+
+                <div className={ok ? "pos" : "neg"}>{pct(p.pnl_percent)}</div>
+
+                <div>{inr(p.target_price)}</div>
+
+                <div>{inr(p.stop_loss_price)}</div>
+
+                <div className="mono">{p.entry_time}</div>
+
+                <div>
+
+                  <button
+
+                    className="btn danger"
+
+                    onClick={() => onClosePosition(p.symbol)}
+
+                    disabled={status.auth_required || !status.access_token_valid}
+
+                  >
+
+                    Close
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            );
+
+          })}
+
+        </div>
+
+      )}
+
+    </SectionCard>
+
+  )}
+
+
+
+  {tab === "universe" && (
+
+    <SectionCard
+
+      title={`Universe ${universe.version ? "-  " + universe.version : ""}`}
+
+      subtitle={`Watchlist: ${universe.session_universe?.join(", ") || "—"}`}
+
+      actions={
+
+        universe.universe?.length ? (
+
+          <button className="btn ghost" onClick={() => setExpandUniverse((v) => !v)}>
+
+            {expandUniverse ? "Collapse" : "Expand"}
+
+          </button>
+
+        ) : null
+
+      }
+
+    >
+
+      {!universe.universe?.length ? (
+
+        <div className="empty">No universe snapshot</div>
+
+      ) : (
+
+        <div className={`table ${expandUniverse ? "" : "compact"}`}>
+
+          <div className="thead">
+
+            <div>Symbol</div>
+
+            <div>Close</div>
+
+            <div>ATR%</div>
+
+            <div>Med Turn 20</div>
+
+            <div>Score</div>
+
+          </div>
+
+          {universe.universe.map((u, i) => (
+
+            <div className="trow" key={i}>
+
+              <div>{u.Symbol}</div>
+
+              <div>{inr(u.Close)}</div>
+
+              <div>{Number(u.ATR_pct).toFixed(2)}</div>
+
+              <div>{inr(u.MedTurn20)}</div>
+
+              <div>{Number(u.Score).toFixed(3)}</div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      )}
+
+    </SectionCard>
+
+  )}
+
+
+
+  {tab === "activity" && (
+
+    <SectionCard title="Trade Sessions (today)" subtitle={`${todayTrades.length} events`}>
+
+      {!todayTrades.length ? (
+
+        <div className="empty">No entries/exits recorded yet</div>
+
+      ) : (
+
+        <ul className="log">
+
+          {todayTrades.map((t, idx) => (
+
+            <li key={idx} className="pop">
+
+              <span className={`chip ${t.type === "ENTRY" ? "pos" : "warn"}`}>{t.type}</span>
+
+              <span className="mono">{new Date(t.ts).toLocaleTimeString()}</span>
+
+              <span>{t.symbol}</span>
+
+              <span className="muted">{t.side}</span>
+
+              <span className="muted">Qty {t.qty}</span>
+
+              <span>@ {inr(t.price)}</span>
+
+            </li>
+
+          ))}
+
+        </ul>
+
+      )}
+
+    </SectionCard>
+
+  )}
+
+
+
+  {tab === "controls" && (
+
+    <SectionCard title="Controls" subtitle="Manage scans and utilities" tone="accent">
+
+      <div className="actions-grid">
+
+        <button
+
+          className="btn primary"
+
+          onClick={onScan}
+
+          disabled={status.auth_required || !status.access_token_valid}
+
+        >
+
+          Scan now
+
+        </button>
+
+        <button className="btn ghost" onClick={onPause}>
+
+          Pause
+
+        </button>
+
+        <button className="btn ghost" onClick={onResume}>
+
+          Resume
+
+        </button>
+
+        <button
+
+          className="btn ghost"
+
+          onClick={onRebuild}
+
+          disabled={status.auth_required || !status.access_token_valid}
+
+        >
+
+          Rebuild + Scan
+
+        </button>
+
+        <button
+
+          className="btn ghost"
+
+          onClick={async () => {
+
+            await fetchJSON("/backtest/run", { method: "POST" });
+
+            alert("Backtest started");
+
+          }}
+
+        >
+
+          Run Backtest
+
+        </button>
+
+        <button
+
+          className="btn ghost"
+
+          onClick={() => window.open(API_BASE + "/backtest/csv", "_blank")}
+
+        >
+
+          Download CSV
+
+        </button>
+
+      </div>
+
+    </SectionCard>
+
+  )}
+
+
+
+  <footer className="footer">
+
+    <div className="muted">Zerodha Kite -  VWAP + EMA20 (MTF) + ATR -  MIS</div>
+
+  </footer>
+
+</div>
+
+);
+
+}
+
+
+
+const [status, setStatus] = useState(null);
+
+const [universe, setUniverse] = useState({
+
+version: null,
+
+session_universe: [],
+
+universe: [],
+
+});
+
+const [health, setHealth] = useState(null);
+
+const [lastHealthAt, setLastHealthAt] = useState(null);
+
+const [note, setNote] = useState("");
+
+const [loading, setLoading] = useState(false);
+
+
+
+const [reqToken, setReqToken] = useState("");
+
+const [reqTokenMsg, setReqTokenMsg] = useState("");
+
+
+
+const todayTradesRef = useRef([]);
+
+const [todayTrades, setTodayTrades] = useState([]);
+
+const prevPositionsRef = useRef({});
+
+
+
+// Prefill request_token if in URL
+
+useEffect(() => {
+
+const rt = getQueryParam("request_token");
+
+if (rt && rt.length === 32) {
+
+setReqToken(rt);
+
+setReqTokenMsg("Token detected. Verify & Save.");
+
+}
+
+}, []);
+
+
+
+// Initial load
+
+useEffect(() => {
+
+(async () => {
+
+try {
+
+const [s, u, h] = await Promise.all([
+
+fetchJSON("/api/status").catch(() => null),
+
+fetchJSON("/api/universe").catch(() => ({
+
+session_universe: [],
+
+universe: [],
+
+version: null,
+
+})),
+
+fetchJSON("/health").catch(() => null),
+
+]);
+
+if (s) setStatus(s);
+
+if (u) setUniverse(u);
+
+if (h) {
+
+setHealth(h);
+
+setLastHealthAt(new Date());
+
+}
+
+} catch {
+
+setNote("Failed to load initial data");
+
+}
+
+})();
+
+}, []);
+
+
+
+// Poll status
+
+useEffect(() => {
+
+const t = setInterval(async () => {
+
+try {
+
+const s = await fetchJSON("/api/status");
+
+setStatus(s);
+
+updateStream(s.positions || []);
+
+} catch {}
+
+}, POLL_MS);
+
+return () => clearInterval(t);
+
+}, []);
+
+
+
+// Keep-alive
+
+useEffect(() => {
+
+const t = setInterval(async () => {
+
+try {
+
+const h = await fetchJSON("/health");
+
+setHealth(h);
+
+setLastHealthAt(new Date());
+
+} catch {
+
+setNote("Keep-alive failed");
+
+}
+
+}, HEALTH_PING_MS);
+
+return () => clearInterval(t);
+
+}, []);
+
+
+
+function updateStream(currPositions) {
+
+const prev = prevPositionsRef.current;
+
+const currMap = {};
+
+currPositions.forEach((p) => {
+
+const k = ${p.symbol}_${p.entry_time}_${p.quantity};
+
+currMap[k] = p;
+
+if (!prev[k]) {
+
+todayTradesRef.current = [
+
+{
+
+type: "ENTRY",
+
+ts: new Date().toISOString(),
+
+symbol: p.symbol,
+
+side: p.transaction_type,
+
+qty: p.quantity,
+
+price: p.buy_price,
+
+},
+
+...todayTradesRef.current,
+
+];
+
+}
+
+});
+
+Object.keys(prev).forEach((k) => {
+
+if (!currMap[k]) {
+
+const p = prev[k];
+
+todayTradesRef.current = [
+
+{
+
+type: "EXIT",
+
+ts: new Date().toISOString(),
+
+symbol: p.symbol,
+
+side: p.transaction_type,
+
+qty: p.quantity,
+
+price: p.current_price,
+
+},
+
+...todayTradesRef.current,
+
+];
+
+}
+
+});
+
+prevPositionsRef.current = currMap;
+
+setTodayTrades(todayTradesRef.current.slice(0, 50));
+
+}
+
+
+
+async function control(action) {
+
+setNote("");
+
+try {
+
+const resp = await fetchJSON(/control/${action});
+
+setNote(resp.status || "OK");
+
+if (action.includes("rebuild")) {
+
+const u = await fetchJSON("/api/universe");
+
+setUniverse(u);
+
+}
+
+} catch (e) {
+
+setNote("Action failed: " + e.message);
+
+}
+
+}
+
+async function closePosition(symbol) {
+
+setNote("");
+
+try {
+
+const resp = await fetchJSON("/api/close-position", {
+
+method: "POST",
+
+body: { symbol },
+
+});
+
+setNote(resp.message || "Close requested");
+
+} catch (e) {
+
+setNote("Close failed: " + e.message);
+
+}
+
+}
+
+function kiteLogin() {
+
+if (!BACKEND_URL) {
+
+setNote("Backend URL is not configured");
+
+return;
+
+}
+
+window.location.href = ${BACKEND_URL}/auth/login?next=/;
+
+}
+
+async function verifyToken() {
+
+setReqTokenMsg("");
+
+if (!reqToken || reqToken.length !== 32) {
+
+setReqTokenMsg("Enter a valid 32-character request_token.");
+
+return;
+
+}
+
+try {
+
+setLoading(true);
+
+const resp = await fetchJSON("/session/exchange", {
+
+method: "POST",
+
+body: { request_token: reqToken },
+
+});
+
+if (resp.success) {
+
+setReqTokenMsg("Verified. Session active.");
+
+const s = await fetchJSON("/api/status");
+
+setStatus(s);
+
+const url = new URL(window.location.href);
+
+if (url.searchParams.get("request_token")) {
+
+url.searchParams.delete("request_token");
+
+window.history.replaceState({}, "", url.toString());
+
+}
+
+} else {
+
+setReqTokenMsg("Verification failed.");
+
+}
+
+} catch (e) {
+
+setReqTokenMsg("Verification failed: " + e.message);
+
+} finally {
+
+setLoading(false);
+
+}
+
+}
+
+
+
+const s = status || {};
+
+const positions = s.positions || [];
+
+const isAuthed = !!s.access_token_valid && !s.auth_required;
+
+
+
+return (
+
+<div className="app gradient-bg">
+
+{!isAuthed ? (
+
+<AuthScreen onKiteLogin={kiteLogin} reqToken={reqToken} setReqToken={setReqToken} onVerify={verifyToken} loading={loading} message={reqTokenMsg} />
+
+) : (
+
+<>
+
+<Dashboard
+
+status={s}
+
+universe={universe}
+
+todayTrades={todayTrades}
+
+positions={positions}
+
+onScan={() => control("scan")}
+
+onPause={() => control("pause")}
+
+onResume={() => control("resume")}
+
+onRebuild={() => control("rebuild_and_scan")}
+
+onClosePosition={closePosition}
+
+note={note}
+
+/>
+
+</>
+
+)}
+
+</div>
+
+);
+
+}
