@@ -548,7 +548,7 @@ function updateStream(currPositions) {
 const prev = prevPositionsRef.current;
 const currMap = {};
 currPositions.forEach((p) => {
-const k = ${p.symbol}_${p.entry_time}_${p.quantity};
+const k = `${p.symbol}_${p.entry_time}_${p.quantity}`;
 currMap[k] = p;
 if (!prev[k]) {
 todayTradesRef.current = [
