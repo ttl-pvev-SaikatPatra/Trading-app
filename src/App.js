@@ -6,26 +6,16 @@ const POLL_MS = 5000;
 const HEALTH_PING_MS = 120000;
 const SCAN_INTERVAL_MIN = 15;
 
-function inr(n) {
-  if (n === null || n === undefined) return "—";
-  return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-}
-function pct(n) {
-  if (n === null || n === undefined) return "—";
-  return Number(n).toFixed(2) + "%";
-}
+function inr(n) { if (n === null || n === undefined) return "—"; return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }); }
+function pct(n) { if (n === null || n === undefined) return "—"; return Number(n).toFixed(2) + "%"; }
+
 function nextScanCountdown() {
   const now = new Date();
   const m = now.getMinutes();
   const nextBlockMin = Math.ceil((m + 0.0001) / SCAN_INTERVAL_MIN) * SCAN_INTERVAL_MIN;
   const next = new Date(now);
   next.setSeconds(0, 0);
-  if (nextBlockMin >= 60) {
-    next.setHours(next.getHours() + 1);
-    next.setMinutes(0);
-  } else {
-    next.setMinutes(nextBlockMin);
-  }
+  if (nextBlockMin >= 60) { next.setHours(next.getHours() + 1); next.setMinutes(0); } else { next.setMinutes(nextBlockMin); }
   const diffMs = next - now;
   const ss = Math.max(0, Math.floor(diffMs / 1000));
   const mm = Math.floor(ss / 60);
@@ -54,7 +44,7 @@ export default function App() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // New: request_token capture and submission state
+  // auth helper
   const [reqToken, setReqToken] = useState("");
   const [reqTokenMsg, setReqTokenMsg] = useState("");
 
@@ -62,12 +52,12 @@ export default function App() {
   const [todayTrades, setTodayTrades] = useState([]);
   const prevPositionsRef = useRef({});
 
-  // Prefill request_token if present in the URL (useful when the frontend is the redirect URL during local dev)
+  // Prefill request_token if present
   useEffect(() => {
     const rt = getQueryParam("request_token");
     if (rt && rt.length === 32) {
       setReqToken(rt);
-      setReqTokenMsg("Request token detected from URL. Click Verify & Save.");
+      setReqTokenMsg("Request token detected from URL. Verify & Save to finish login.");
     }
   }, []);
 
@@ -83,7 +73,7 @@ export default function App() {
         if (s) setStatus(s);
         if (u) setUniverse(u);
         if (h) { setHealth(h); setLastHealthAt(new Date()); }
-      } catch (e) {
+      } catch {
         setNote("Failed to load initial data");
       }
     };
@@ -177,16 +167,11 @@ export default function App() {
     } catch (e) { setNote("Close failed: " + e.message); }
   }
 
-  // New: Start OAuth on backend (redirect to Zerodha)
   function kiteLogin() {
-    if (!BACKEND_URL) {
-      setNote("Backend URL is not configured");
-      return;
-    }
+    if (!BACKEND_URL) { setNote("Backend URL is not configured"); return; }
     window.location.href = `${BACKEND_URL}/auth/login?next=/`;
   }
 
-  // New: Submit a pasted 32-char request_token to backend to exchange and store access_token
   async function submitRequestToken(e) {
     e.preventDefault();
     setReqTokenMsg("");
@@ -198,11 +183,9 @@ export default function App() {
       setLoading(true);
       const resp = await fetchJSON("/session/exchange", { method: "POST", body: { request_token: reqToken } });
       if (resp.success) {
-        setReqTokenMsg("Verified and saved. Session active.");
-        // Refresh status so UI updates instantly
+        setReqTokenMsg("Verified. Session active.");
         const s = await fetchJSON("/api/status");
         setStatus(s);
-        // Optionally strip request_token from URL if it exists
         const url = new URL(window.location.href);
         if (url.searchParams.get("request_token")) {
           url.searchParams.delete("request_token");
@@ -225,94 +208,79 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">Intraday Trading Dashboard</div>
-        <div className="top-right">
-          <div className="pill">
-            Keep-alive: <span className={health?.flask_working ? "ok" : "bad"}>{health?.flask_working ? "OK" : "—"}</span>
-            {lastHealthAt ? <span className="muted mono"> @ {lastHealthAt.toLocaleTimeString()}</span> : null}
-          </div>
-          <div className="pill">Next scan <span className="mono">{countdown}</span></div>
+        <div className="brand">
+          <div className="title">Intraday Trading</div>
+          <div className="meta muted">Next scan {countdown} • Keep-alive <span className={health?.flask_working ? "ok" : "bad"}>{health?.flask_working ? "OK" : "—"}</span> {lastHealthAt ? <span className="muted mono">@ {lastHealthAt.toLocaleTimeString()}</span> : null}</div>
+        </div>
+        <div className="actions">
+          <button className="btn primary" onClick={() => control("scan")} disabled={s.auth_required || !s.access_token_valid}>Scan now</button>
+          <button className="btn ghost" onClick={() => control("pause")}>Pause</button>
+          <button className="btn ghost" onClick={() => control("resume")}>Resume</button>
+          <button className="btn ghost" onClick={() => control("rebuild_and_scan")} disabled={s.auth_required || !s.access_token_valid}>Rebuild + Scan</button>
         </div>
       </header>
 
       {(s.auth_required || !s.access_token_valid) && (
-        <div className="banner warn" style={{ display: "grid", gap: 10 }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <div>Authentication required to continue trading.</div>
-            <button className="btn accent" onClick={kiteLogin}>Connect Zerodha</button>
+        <div className="banner warn">
+          <div className="banner-row">
+            <div className="banner-title">Authentication required</div>
+            <button className="btn success" onClick={kiteLogin}>Connect Zerodha</button>
           </div>
-
-          <form className="req-form" onSubmit={submitRequestToken} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <form className="auth-form" onSubmit={submitRequestToken}>
             <input
+              className="input"
               placeholder="Paste 32-char request_token"
               value={reqToken}
               onChange={(e) => setReqToken(e.target.value.trim())}
               maxLength={64}
-              style={{ flex: 1, minWidth: 260 }}
+              inputMode="latin"
             />
-            <button className="btn" type="submit" disabled={loading}>Verify & Save</button>
+            <button className="btn secondary" type="submit" disabled={loading}>Verify & Save</button>
           </form>
           {reqTokenMsg && <div className="muted">{reqTokenMsg}</div>}
         </div>
       )}
 
-      {note && <div className="banner info">{note}</div>}
+      {note && <div className="toast">{note}</div>}
 
-      <section className="grid">
+      <section className="kpis">
         <div className="card kpi">
           <div className="kpi-label">Available Balance</div>
           <div className="kpi-value">{inr(s.balance)}</div>
           <div className="kpi-sub muted">Updated {s.last_update || "—"}</div>
         </div>
-
         <div className="card kpi">
           <div className="kpi-label">Daily PnL</div>
           <div className={`kpi-value ${dailyPnL >= 0 ? "pos" : "neg"}`}>{inr(dailyPnL)}</div>
           <div className="kpi-sub muted">Trades {s.total_trades ?? 0}</div>
         </div>
-
         <div className="card kpi">
           <div className="kpi-label">Bot / Market</div>
           <div className="kpi-value">
             <span className={`pill ${s.market_open ? "ok" : "bad"}`}>{s.market_open ? "Market Open" : "Market Closed"}</span>
-            <span className="spacer" />
+            <span className="divider" />
             <span className="muted">{s.bot_status || "—"}</span>
           </div>
           <div className="kpi-sub muted">Reason: {noTradeReason}</div>
         </div>
-
         <div className="card kpi">
           <div className="kpi-label">Risk & Limits</div>
           <div className="kpi-value">
             <span>Risk/trade: <b>{pct((s.risk_per_trade || 0) * 100)}</b></span>
-            <span className="spacer" />
+            <span className="divider" />
             <span>Max positions: <b>{s.max_positions ?? "—"}</b></span>
           </div>
           <div className="kpi-sub muted">Active: {(s.positions || []).length}</div>
         </div>
       </section>
 
-      <section className="card controls">
-        <div className="controls-left">
-          <button className="btn" onClick={() => control("scan")} disabled={s.auth_required || !s.access_token_valid}>Scan now</button>
-          <button className="btn" onClick={() => control("pause")}>Pause</button>
-          <button className="btn" onClick={() => control("resume")}>Resume</button>
-          <button className="btn" onClick={() => control("rebuild_and_scan")} disabled={s.auth_required || !s.access_token_valid}>Rebuild + Scan</button>
-        </div>
-        <div className="controls-right">
-          <button className="btn subtle" onClick={() => control("scan")}>Refresh</button>
-          <button className="btn subtle" onClick={async () => { await fetchJSON("/backtest/run", { method: "POST" }); setNote("Backtest started"); }}>Run Backtest</button>
-          <button className="btn subtle" onClick={() => window.open(API_BASE + "/backtest/csv", "_blank")}>Download CSV</button>
-        </div>
-      </section>
-
-      <section className="card positions">
-        <div className="card-head">
+      <section className="card">
+        <div className="section-head">
           <h3>Active Positions</h3>
           <div className="muted">{positions.length} open</div>
         </div>
         {positions.length === 0 ? (
-          <div className="empty muted">No active positions</div>
+          <div className="empty">No active positions</div>
         ) : (
           <div className="table">
             <div className="thead">
@@ -342,13 +310,13 @@ export default function App() {
         )}
       </section>
 
-      <section className="card activity">
-        <div className="card-head">
+      <section className="card">
+        <div className="section-head">
           <h3>Trade Sessions (today)</h3>
           <div className="muted">{todayTrades.length} events</div>
         </div>
         {todayTrades.length === 0 ? (
-          <div className="empty muted">No entries/exits recorded yet</div>
+          <div className="empty">No entries/exits recorded yet</div>
         ) : (
           <ul className="log">
             {todayTrades.map((t, idx) => (
@@ -365,10 +333,10 @@ export default function App() {
         )}
       </section>
 
-      <section className="card universe">
-        <div className="card-head">
+      <section className="card">
+        <div className="section-head">
           <h3>Universe {universe.version ? `• ${universe.version}` : ""}</h3>
-          <div className="muted">Watchlist: {universe.session_universe?.join(", ") || "—"}</div>
+          <div className="muted one-line">Watchlist: {universe.session_universe?.join(", ") || "—"}</div>
         </div>
         {universe.universe?.length ? (
           <div className="table compact">
@@ -385,7 +353,7 @@ export default function App() {
               </div>
             ))}
           </div>
-        ) : <div className="empty muted">No universe snapshot</div>}
+        ) : <div className="empty">No universe snapshot</div>}
       </section>
 
       <footer className="footer">
