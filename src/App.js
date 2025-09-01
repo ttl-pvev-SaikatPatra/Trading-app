@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-// Config
-const API_BASE = process.env.REACT_APP_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+/* ================= Config ================= */
+const API_BASE = (process.env.REACT_APP_API_BASE || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/+$/,"");
 const BACKEND_URL = API_BASE;
 const POLL_MS = 5000;
 const HEALTH_PING_MS = 120000;
 const SCAN_INTERVAL_MIN = 15;
 
-// Utilities
+/* ================= Utilities ================= */
 function inr(n) {
   if (n === null || n === undefined) return "—";
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -53,7 +53,7 @@ function nextScanCountdown() {
 }
 
 async function fetchJSON(path, options = {}) {
-  const url = API_BASE + path;
+  const url = `${API_BASE}${path}`;
   const headers = { "Content-Type": "application/json" };
   const body = options.body ? JSON.stringify(options.body) : undefined;
   const res = await fetch(url, { ...options, headers, body });
@@ -66,7 +66,43 @@ function getQueryParam(name) {
   return params.get(name);
 }
 
-// Loading Spinner Component
+/* Helpers for auth hydration */
+const CLEANUP_QUERY_KEYS = ["auth","code","request_token"];
+
+async function confirmSessionAndRefresh() {
+  try {
+    // 1) Confirm backend auth
+    const ses = await fetchJSON("/auth/session"); // { authenticated: boolean }
+    const sessionStatus = {
+      access_token_valid: !!ses?.authenticated,
+      auth_required: !ses?.authenticated
+    };
+    // 2) If authenticated, refresh data
+    let s = null, u = null;
+    if (ses?.authenticated) {
+      s = await fetchJSON("/api/status").catch(() => null);
+      u = await fetchJSON("/api/universe").catch(() => null);
+    }
+    return { sessionStatus, s, u };
+  } catch {
+    return { sessionStatus: { access_token_valid: false, auth_required: true } };
+  }
+}
+
+function cleanUrlParams() {
+  const url = new URL(window.location.href);
+  let changed = false;
+  CLEANUP_QUERY_KEYS.forEach(k => {
+    if (url.searchParams.has(k)) {
+      url.searchParams.delete(k);
+      changed = true;
+    }
+  });
+  if (changed) window.history.replaceState({}, "", url.toString());
+}
+
+/* ================= UI Components ================= */
+// Loading Spinner
 function LoadingSpinner({ size = "md" }) {
   return (
     <div className={`loading-spinner ${size}`}>
@@ -75,13 +111,13 @@ function LoadingSpinner({ size = "md" }) {
   );
 }
 
-// Progress Bar Component
+// Progress Bar
 function ProgressBar({ progress, status, className = "" }) {
   return (
     <div className={`progress-container ${className}`}>
       <div className="progress-bar">
-        <div 
-          className="progress-fill" 
+        <div
+          className="progress-fill"
           style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
         />
       </div>
@@ -105,7 +141,7 @@ function ThemeToggle() {
   }, [dark]);
 
   return (
-    <button className="theme-toggle" onClick={() => setDark((v) => !v)} aria-label="Toggle theme">
+    <button className="theme-toggle" onClick={() => setDark(v => !v)} aria-label="Toggle theme">
       <div className="theme-toggle-track">
         <div className={`theme-toggle-thumb ${dark ? "dark" : "light"}`}>
           {dark ? "🌙" : "☀️"}
@@ -115,40 +151,29 @@ function ThemeToggle() {
   );
 }
 
-// App Header
+// Header
 function AppHeader({ onPrimary, canScan, status }) {
   const [countdown, setCountdown] = useState("00:00");
-
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown(nextScanCountdown());
-    }, 1000);
+    const timer = setInterval(() => setCountdown(nextScanCountdown()), 1000);
     return () => clearInterval(timer);
   }, []);
-
   return (
     <header className="app-header">
       <div className="brand-section">
         <div className="brand-logo">
-          <img
-            className="logo"
-            alt="Nimbus Trader"
-            src="/logo.svg"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
+          <img className="logo" alt="Nimbus Trader" src="/logo.svg" onError={(e) => { e.currentTarget.style.display = "none"; }}/>
         </div>
         <div className="brand-info">
           <h1 className="brand-title">Nimbus Trader</h1>
           <p className="brand-subtitle">Intelligent. Precise. Profitable.</p>
         </div>
       </div>
-      
+
       <div className="header-status">
         <div className="status-indicator">
           <div className={`status-dot ${status?.market_open ? 'active' : 'inactive'}`}></div>
-          <span className="status-text">
-            {status?.market_open ? 'Market Open' : 'Market Closed'}
-          </span>
+          <span className="status-text">{status?.market_open ? 'Market Open' : 'Market Closed'}</span>
         </div>
         <div className="next-scan">
           <span className="next-scan-label">Next scan in</span>
@@ -158,11 +183,7 @@ function AppHeader({ onPrimary, canScan, status }) {
 
       <div className="header-actions">
         <ThemeToggle />
-        <button 
-          className="btn primary scan-btn" 
-          onClick={onPrimary} 
-          disabled={!canScan}
-        >
+        <button className="btn primary scan-btn" onClick={onPrimary} disabled={!canScan}>
           <span className="btn-icon">🔍</span>
           Scan Now
         </button>
@@ -171,7 +192,7 @@ function AppHeader({ onPrimary, canScan, status }) {
   );
 }
 
-// Enhanced Tabs
+// Tabs
 function Tabs({ value, onChange, items }) {
   return (
     <div className="enhanced-tabs">
@@ -192,7 +213,7 @@ function Tabs({ value, onChange, items }) {
   );
 }
 
-// Enhanced Section Card
+// Section Card
 function SectionCard({ title, subtitle, children, actions, tone, className = "" }) {
   return (
     <div className={`section-card ${tone || ""} ${className}`}>
@@ -203,14 +224,12 @@ function SectionCard({ title, subtitle, children, actions, tone, className = "" 
         </div>
         {actions && <div className="section-actions">{actions}</div>}
       </div>
-      <div className="section-content">
-        {children}
-      </div>
+      <div className="section-content">{children}</div>
     </div>
   );
 }
 
-// Enhanced KPI Card
+// KPI
 function KPI({ label, value, sub, trend, posneg, icon, className = "" }) {
   return (
     <div className={`kpi-card ${posneg || ""} ${className}`}>
@@ -219,7 +238,7 @@ function KPI({ label, value, sub, trend, posneg, icon, className = "" }) {
           {icon && <span className="kpi-icon">{icon}</span>}
           <span className="kpi-label">{label}</span>
         </div>
-        {trend && (
+        {typeof trend === "number" && (
           <div className={`kpi-trend ${trend > 0 ? 'up' : 'down'}`}>
             <span className="trend-icon">{trend > 0 ? '↗' : '↘'}</span>
             <span className="trend-value">{Math.abs(trend).toFixed(1)}%</span>
@@ -232,7 +251,7 @@ function KPI({ label, value, sub, trend, posneg, icon, className = "" }) {
   );
 }
 
-// Backtest Configuration Component
+// Backtest Config
 function BacktestConfig({ onStart, loading }) {
   const [config, setConfig] = useState({
     start_date: "2024-06-01",
@@ -248,16 +267,10 @@ function BacktestConfig({ onStart, loading }) {
   ];
 
   const handlePreset = (preset) => {
-    setConfig(prev => ({
-      ...prev,
-      start_date: preset.start,
-      end_date: preset.end
-    }));
+    setConfig(prev => ({ ...prev, start_date: preset.start, end_date: preset.end }));
   };
 
-  const handleStart = () => {
-    onStart(config);
-  };
+  const handleStart = () => onStart(config);
 
   return (
     <div className="backtest-config">
@@ -265,11 +278,7 @@ function BacktestConfig({ onStart, loading }) {
         <h4 className="config-section-title">Quick Presets</h4>
         <div className="preset-grid">
           {presets.map((preset, idx) => (
-            <button
-              key={idx}
-              className="preset-card"
-              onClick={() => handlePreset(preset)}
-            >
+            <button key={idx} className="preset-card" onClick={() => handlePreset(preset)}>
               <div className="preset-name">{preset.name}</div>
               <div className="preset-desc">{preset.desc}</div>
             </button>
@@ -282,44 +291,23 @@ function BacktestConfig({ onStart, loading }) {
         <div className="config-inputs">
           <div className="input-group">
             <label htmlFor="start-date">Start Date</label>
-            <input
-              id="start-date"
-              type="date"
-              className="input"
-              value={config.start_date}
-              onChange={(e) => setConfig(prev => ({ ...prev, start_date: e.target.value }))}
-            />
+            <input id="start-date" type="date" className="input" value={config.start_date}
+              onChange={(e) => setConfig(prev => ({ ...prev, start_date: e.target.value }))}/>
           </div>
           <div className="input-group">
             <label htmlFor="end-date">End Date</label>
-            <input
-              id="end-date"
-              type="date"
-              className="input"
-              value={config.end_date}
-              onChange={(e) => setConfig(prev => ({ ...prev, end_date: e.target.value }))}
-            />
+            <input id="end-date" type="date" className="input" value={config.end_date}
+              onChange={(e) => setConfig(prev => ({ ...prev, end_date: e.target.value }))}/>
           </div>
           <div className="input-group">
             <label htmlFor="capital">Initial Capital</label>
-            <input
-              id="capital"
-              type="number"
-              className="input"
-              value={config.capital}
-              onChange={(e) => setConfig(prev => ({ ...prev, capital: parseInt(e.target.value) }))}
-              min="10000"
-              step="1000"
-            />
+            <input id="capital" type="number" className="input" value={config.capital}
+              onChange={(e) => setConfig(prev => ({ ...prev, capital: parseInt(e.target.value || "0") }))} min="10000" step="1000"/>
           </div>
         </div>
       </div>
 
-      <button
-        className="btn primary wide"
-        onClick={handleStart}
-        disabled={loading}
-      >
+      <button className="btn primary wide" onClick={handleStart} disabled={loading}>
         {loading ? <LoadingSpinner size="sm" /> : <span className="btn-icon">🚀</span>}
         {loading ? "Running Backtest..." : "Start Backtest"}
       </button>
@@ -327,7 +315,7 @@ function BacktestConfig({ onStart, loading }) {
   );
 }
 
-// Backtest Results Component
+// Backtest Results
 function BacktestResults({ results, onDownload }) {
   if (!results?.summary) {
     return (
@@ -338,7 +326,6 @@ function BacktestResults({ results, onDownload }) {
       </div>
     );
   }
-
   const { summary } = results;
   const period = summary.period_summary;
   const trading = summary.trading_stats;
@@ -359,68 +346,23 @@ function BacktestResults({ results, onDownload }) {
         <div className="results-section">
           <h5 className="results-section-title">Performance Overview</h5>
           <div className="kpi-grid">
-            <KPI
-              label="Total Return"
-              value={inr(period.total_return)}
-              sub={`${period.total_return_pct}% return`}
-              posneg={period.total_return >= 0 ? "pos" : "neg"}
-              icon="💰"
-            />
-            <KPI
-              label="Win Rate"
-              value={`${trading.win_rate}%`}
-              sub={`${trading.winning_trades}/${trading.total_trades} trades`}
-              posneg={trading.win_rate >= 55 ? "pos" : "neg"}
-              icon="🎯"
-            />
-            <KPI
-              label="Profit Factor"
-              value={performance.profit_factor.toFixed(2)}
-              sub={`Avg win: ${inr(performance.avg_win)}`}
-              posneg={performance.profit_factor >= 1.5 ? "pos" : "neg"}
-              icon="⚡"
-            />
-            <KPI
-              label="Max Drawdown"
-              value={`${Math.abs(performance.max_drawdown).toFixed(1)}%`}
-              sub={`Sharpe: ${performance.sharpe_ratio.toFixed(2)}`}
-              posneg={Math.abs(performance.max_drawdown) <= 20 ? "pos" : "neg"}
-              icon="📉"
-            />
+            <KPI label="Total Return" value={inr(period.total_return)} sub={`${period.total_return_pct}% return`} posneg={period.total_return >= 0 ? "pos" : "neg"} icon="💰"/>
+            <KPI label="Win Rate" value={`${trading.win_rate}%`} sub={`${trading.winning_trades}/${trading.total_trades} trades`} posneg={trading.win_rate >= 55 ? "pos" : "neg"} icon="🎯"/>
+            <KPI label="Profit Factor" value={performance.profit_factor.toFixed(2)} sub={`Avg win: ${inr(performance.avg_win)}`} posneg={performance.profit_factor >= 1.5 ? "pos" : "neg"} icon="⚡"/>
+            <KPI label="Max Drawdown" value={`${Math.abs(performance.max_drawdown).toFixed(1)}%`} sub={`Sharpe: ${performance.sharpe_ratio.toFixed(2)}`} posneg={Math.abs(performance.max_drawdown) <= 20 ? "pos" : "neg"} icon="📉"/>
           </div>
         </div>
 
         <div className="results-section">
           <h5 className="results-section-title">Trading Statistics</h5>
           <div className="stats-table">
-            <div className="stat-row">
-              <span className="stat-label">Total Trades</span>
-              <span className="stat-value">{trading.total_trades}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Trades per Day</span>
-              <span className="stat-value">{trading.trades_per_day}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Average Win</span>
-              <span className="stat-value pos">{inr(performance.avg_win)}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Average Loss</span>
-              <span className="stat-value neg">{inr(-performance.avg_loss)}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Monthly Average</span>
-              <span className="stat-value">{inr(monthly.monthly_avg)}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Best Month</span>
-              <span className="stat-value pos">{inr(monthly.best_month)}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Worst Month</span>
-              <span className="stat-value neg">{inr(monthly.worst_month)}</span>
-            </div>
+            <div className="stat-row"><span className="stat-label">Total Trades</span><span className="stat-value">{trading.total_trades}</span></div>
+            <div className="stat-row"><span className="stat-label">Trades per Day</span><span className="stat-value">{trading.trades_per_day}</span></div>
+            <div className="stat-row"><span className="stat-label">Average Win</span><span className="stat-value pos">{inr(performance.avg_win)}</span></div>
+            <div className="stat-row"><span className="stat-label">Average Loss</span><span className="stat-value neg">{inr(-performance.avg_loss)}</span></div>
+            <div className="stat-row"><span className="stat-label">Monthly Average</span><span className="stat-value">{inr(monthly.monthly_avg)}</span></div>
+            <div className="stat-row"><span className="stat-label">Best Month</span><span className="stat-value pos">{inr(monthly.best_month)}</span></div>
+            <div className="stat-row"><span className="stat-label">Worst Month</span><span className="stat-value neg">{inr(monthly.worst_month)}</span></div>
           </div>
         </div>
       </div>
@@ -429,47 +371,24 @@ function BacktestResults({ results, onDownload }) {
         <h5 className="results-section-title">Strategy Assessment</h5>
         <div className="assessment-grid">
           <div className={`assessment-card ${trading.win_rate >= 55 ? 'good' : 'warning'}`}>
-            <div className="assessment-icon">
-              {trading.win_rate >= 55 ? '✅' : '⚠️'}
-            </div>
+            <div className="assessment-icon">{trading.win_rate >= 55 ? '✅' : '⚠️'}</div>
             <div className="assessment-content">
               <div className="assessment-title">Win Rate</div>
-              <div className="assessment-desc">
-                {trading.win_rate >= 55 
-                  ? "Excellent win rate indicates strong signal quality"
-                  : "Win rate below target - consider signal refinement"
-                }
-              </div>
+              <div className="assessment-desc">{trading.win_rate >= 55 ? "Excellent win rate indicates strong signal quality" : "Win rate below target - consider signal refinement"}</div>
             </div>
           </div>
-
           <div className={`assessment-card ${Math.abs(performance.max_drawdown) <= 20 ? 'good' : 'warning'}`}>
-            <div className="assessment-icon">
-              {Math.abs(performance.max_drawdown) <= 20 ? '✅' : '⚠️'}
-            </div>
+            <div className="assessment-icon">{Math.abs(performance.max_drawdown) <= 20 ? '✅' : '⚠️'}</div>
             <div className="assessment-content">
               <div className="assessment-title">Risk Management</div>
-              <div className="assessment-desc">
-                {Math.abs(performance.max_drawdown) <= 20
-                  ? "Drawdown within acceptable limits"
-                  : "High drawdown - review position sizing"
-                }
-              </div>
+              <div className="assessment-desc">{Math.abs(performance.max_drawdown) <= 20 ? "Drawdown within acceptable limits" : "High drawdown - review position sizing"}</div>
             </div>
           </div>
-
           <div className={`assessment-card ${monthly.monthly_avg >= 800 ? 'good' : 'warning'}`}>
-            <div className="assessment-icon">
-              {monthly.monthly_avg >= 800 ? '✅' : '⚠️'}
-            </div>
+            <div className="assessment-icon">{monthly.monthly_avg >= 800 ? '✅' : '⚠️'}</div>
             <div className="assessment-content">
               <div className="assessment-title">Profitability</div>
-              <div className="assessment-desc">
-                {monthly.monthly_avg >= 800
-                  ? "Monthly returns meet target expectations"
-                  : "Returns below target - optimize strategy parameters"
-                }
-              </div>
+              <div className="assessment-desc">{monthly.monthly_avg >= 800 ? "Monthly returns meet target expectations" : "Returns below target - optimize strategy parameters"}</div>
             </div>
           </div>
         </div>
@@ -478,7 +397,7 @@ function BacktestResults({ results, onDownload }) {
   );
 }
 
-// Auth Screen (Enhanced)
+// Auth Screen
 function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, message }) {
   return (
     <div className="auth-container">
@@ -487,21 +406,14 @@ function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, mes
         <div className="auth-blur-2"></div>
         <div className="auth-blur-3"></div>
       </div>
-      
+
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
-            <img
-              className="logo-large"
-              alt="Nimbus Trader"
-              src="/logo.svg"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
+            <img className="logo-large" alt="Nimbus Trader" src="/logo.svg" onError={(e) => { e.currentTarget.style.display = "none"; }}/>
           </div>
           <h1 className="auth-title">Welcome to Nimbus Trader</h1>
-          <p className="auth-subtitle">
-            Connect your Zerodha account to start intelligent algorithmic trading
-          </p>
+          <p className="auth-subtitle">Connect your Zerodha account to start intelligent algorithmic trading</p>
         </div>
 
         <div className="auth-content">
@@ -516,13 +428,7 @@ function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, mes
             <span className="divider-line"></span>
           </div>
 
-          <form
-            className="auth-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onVerify();
-            }}
-          >
+          <form className="auth-form" onSubmit={(e) => { e.preventDefault(); onVerify(); }}>
             <div className="input-group">
               <label htmlFor="request-token">Request Token</label>
               <input
@@ -534,12 +440,8 @@ function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, mes
                 maxLength={64}
               />
             </div>
-            
-            <button 
-              className="btn secondary wide" 
-              type="submit" 
-              disabled={loading || !reqToken}
-            >
+
+            <button className="btn secondary wide" type="submit" disabled={loading || !reqToken}>
               {loading ? <LoadingSpinner size="sm" /> : "Verify Token"}
             </button>
           </form>
@@ -561,7 +463,7 @@ function AuthScreen({ onKiteLogin, reqToken, setReqToken, onVerify, loading, mes
   );
 }
 
-// Main Dashboard Component
+// Dashboard
 function Dashboard({
   status,
   universe,
@@ -596,21 +498,17 @@ function Dashboard({
     return "No qualifying signal";
   }, [status, universe]);
 
-  // Backtest polling
+  // Backtest polling (placeholder backend; keep UI behavior)
   useEffect(() => {
     let pollInterval;
-    
     if (backtestStatus.status === 'running') {
       pollInterval = setInterval(async () => {
         try {
           const statusRes = await fetchJSON('/api/backtest/status');
           setBacktestStatus(statusRes);
-          
           if (statusRes.status === 'completed') {
             const resultsRes = await fetchJSON('/api/backtest/results');
-            if (resultsRes.success) {
-              setBacktestResults(resultsRes.data);
-            }
+            if (resultsRes.success) setBacktestResults(resultsRes.data);
             setBacktestLoading(false);
           } else if (statusRes.status === 'error') {
             setBacktestLoading(false);
@@ -620,24 +518,14 @@ function Dashboard({
         }
       }, 2000);
     }
-    
-    return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-    };
+    return () => { if (pollInterval) clearInterval(pollInterval); };
   }, [backtestStatus.status]);
 
   const handleBacktestStart = async (config) => {
     try {
       setBacktestLoading(true);
       setBacktestResults(null);
-      
-      const response = await fetchJSON('/api/backtest/start', {
-        method: 'POST',
-        body: config
-      });
-      
+      const response = await fetchJSON('/api/backtest/start', { method: 'POST', body: config });
       if (response.success) {
         setBacktestStatus({ status: 'running', progress: 0 });
       } else {
@@ -677,33 +565,10 @@ function Dashboard({
       {tab === "overview" && (
         <div className="overview-content">
           <div className="kpi-grid main-kpis">
-            <KPI
-              label="Portfolio Balance"
-              value={inr(status.balance)}
-              sub={`Updated ${status.last_update || "—"}`}
-              icon="💼"
-              className="balance-kpi"
-            />
-            <KPI
-              label="Daily P&L"
-              value={inr(dailyPnL)}
-              sub={`${status.total_trades ?? 0} trades today`}
-              posneg={dailyPnL >= 0 ? "pos" : "neg"}
-              trend={dailyPnL >= 0 ? 2.3 : -1.8}
-              icon="📊"
-            />
-            <KPI
-              label="Active Positions"
-              value={positions.length}
-              sub={`Max: ${status.max_positions ?? "—"}`}
-              icon="🎯"
-            />
-            <KPI
-              label="Risk Per Trade"
-              value={pct((status.risk_per_trade || 0) * 100)}
-              sub="Conservative approach"
-              icon="🛡️"
-            />
+            <KPI label="Portfolio Balance" value={inr(status.balance)} sub={`Updated ${status.last_update || "—"}`} icon="💼" className="balance-kpi"/>
+            <KPI label="Daily P&L" value={inr(dailyPnL)} sub={`${status.total_trades ?? 0} trades today`} posneg={dailyPnL >= 0 ? "pos" : "neg"} trend={dailyPnL >= 0 ? 2.3 : -1.8} icon="📊"/>
+            <KPI label="Active Positions" value={positions.length} sub={`Max: ${status.max_positions ?? "—"}`} icon="🎯"/>
+            <KPI label="Risk Per Trade" value={pct((status.risk_per_trade || 0) * 100)} sub="Conservative approach" icon="🛡️"/>
           </div>
 
           <div className="status-section">
@@ -715,12 +580,10 @@ function Dashboard({
                   </div>
                   <div className="status-details">
                     <div className="status-title">Market Status</div>
-                    <div className="status-value">
-                      {status.market_open ? 'Open & Trading' : 'Closed'}
-                    </div>
+                    <div className="status-value">{status.market_open ? 'Open & Trading' : 'Closed'}</div>
                   </div>
                 </div>
-                
+
                 <div className="status-item">
                   <div className="status-indicator-large">
                     <div className={`status-dot-large ${status.bot_status === 'Running' ? 'active' : 'inactive'}`}></div>
@@ -740,18 +603,14 @@ function Dashboard({
 
           <SectionCard title="Quick Actions" subtitle="Manual controls and operations">
             <div className="quick-actions">
-              <button
-                className="action-btn primary"
-                onClick={onScan}
-                disabled={status.auth_required || !status.access_token_valid}
-              >
+              <button className="action-btn primary" onClick={onScan} disabled={status.auth_required || !status.access_token_valid}>
                 <span className="btn-icon">🔍</span>
                 <div className="btn-content">
                   <div className="btn-title">Scan Markets</div>
                   <div className="btn-desc">Find trading opportunities</div>
                 </div>
               </button>
-              
+
               <button className="action-btn" onClick={onPause}>
                 <span className="btn-icon">⏸️</span>
                 <div className="btn-content">
@@ -759,7 +618,7 @@ function Dashboard({
                   <div className="btn-desc">Stop automated trading</div>
                 </div>
               </button>
-              
+
               <button className="action-btn" onClick={onResume}>
                 <span className="btn-icon">▶️</span>
                 <div className="btn-content">
@@ -767,12 +626,8 @@ function Dashboard({
                   <div className="btn-desc">Continue automated trading</div>
                 </div>
               </button>
-              
-              <button
-                className="action-btn"
-                onClick={onRebuild}
-                disabled={status.auth_required || !status.access_token_valid}
-              >
+
+              <button className="action-btn" onClick={onRebuild} disabled={status.auth_required || !status.access_token_valid}>
                 <span className="btn-icon">🔄</span>
                 <div className="btn-content">
                   <div className="btn-title">Rebuild & Scan</div>
@@ -790,10 +645,7 @@ function Dashboard({
           subtitle={positions.length ? "Monitor your current trades" : "No active positions"}
           actions={
             positions.length ? (
-              <button 
-                className="btn ghost" 
-                onClick={() => setExpandPositions(!expandPositions)}
-              >
+              <button className="btn ghost" onClick={() => setExpandPositions(!expandPositions)}>
                 {expandPositions ? "Collapse" : "Expand Details"}
               </button>
             ) : null
@@ -816,55 +668,35 @@ function Dashboard({
                   <div>Current</div>
                   <div>P&L</div>
                   <div>P&L %</div>
-                  {expandPositions && (
-                    <>
-                      <div>Target</div>
-                      <div>Stop Loss</div>
-                      <div>Entry Time</div>
-                    </>
-                  )}
+                  {expandPositions && (<>
+                    <div>Target</div>
+                    <div>Stop Loss</div>
+                    <div>Entry Time</div>
+                  </>)}
                   <div>Action</div>
                 </div>
-                
+
                 {positions.map((position, index) => {
                   const isProfitable = (position.pnl ?? 0) >= 0;
                   return (
                     <div className={`table-row ${isProfitable ? "profitable" : "loss"}`} key={index}>
-                      <div className="symbol-cell">
-                        <span className="symbol">{position.symbol}</span>
-                      </div>
-                      <div className={`side-cell ${position.transaction_type.toLowerCase()}`}>
-                        <span className="side-badge">{position.transaction_type}</span>
-                      </div>
+                      <div className="symbol-cell"><span className="symbol">{position.symbol}</span></div>
+                      <div className={`side-cell ${position.transaction_type.toLowerCase()}`}><span className="side-badge">{position.transaction_type}</span></div>
                       <div>{position.quantity}</div>
                       <div>{inr(position.buy_price)}</div>
                       <div className="current-price">{inr(position.current_price)}</div>
-                      <div className={`pnl-cell ${isProfitable ? "profit" : "loss"}`}>
-                        {inr(position.pnl)}
-                      </div>
-                      <div className={`pnl-percent ${isProfitable ? "profit" : "loss"}`}>
-                        {pct(position.pnl_percent)}
-                      </div>
-                      
-                      {expandPositions && (
-                        <>
-                          <div>{inr(position.target_price)}</div>
-                          <div>{inr(position.stop_loss_price)}</div>
-                          <div className="time-cell">
-                            <div className="entry-date">{formatDate(position.entry_time)}</div>
-                            <div className="entry-time">{formatTime(position.entry_time)}</div>
-                          </div>
-                        </>
-                      )}
-                      
+                      <div className={`pnl-cell ${isProfitable ? "profit" : "loss"}`}>{inr(position.pnl)}</div>
+                      <div className={`pnl-percent ${isProfitable ? "profit" : "loss"}`}>{pct(position.pnl_percent)}</div>
+                      {expandPositions && (<>
+                        <div>{inr(position.target_price)}</div>
+                        <div>{inr(position.stop_loss_price)}</div>
+                        <div className="time-cell">
+                          <div className="entry-date">{formatDate(position.entry_time)}</div>
+                          <div className="entry-time">{formatTime(position.entry_time)}</div>
+                        </div>
+                      </>)}
                       <div>
-                        <button
-                          className="btn danger small"
-                          onClick={() => onClosePosition(position.symbol)}
-                          disabled={status.auth_required || !status.access_token_valid}
-                        >
-                          Close
-                        </button>
+                        <button className="btn danger small" onClick={() => onClosePosition(position.symbol)} disabled={status.auth_required || !status.access_token_valid}>Close</button>
                       </div>
                     </div>
                   );
@@ -880,20 +712,12 @@ function Dashboard({
           <SectionCard title="Strategy Backtesting" subtitle="Test your strategy against historical data">
             <div className="backtest-layout">
               <div className="backtest-config-section">
-                <BacktestConfig 
-                  onStart={handleBacktestStart} 
-                  loading={backtestLoading}
-                />
-                
+                <BacktestConfig onStart={handleBacktestStart} loading={backtestLoading} />
                 {backtestStatus.status === 'running' && (
                   <div className="backtest-progress">
-                    <ProgressBar 
-                      progress={backtestStatus.progress} 
-                      status={`Running backtest... ${backtestStatus.progress}%`}
-                    />
+                    <ProgressBar progress={backtestStatus.progress} status={`Running backtest... ${backtestStatus.progress}%`} />
                   </div>
                 )}
-                
                 {backtestStatus.status === 'error' && (
                   <div className="backtest-error">
                     <span className="error-icon">❌</span>
@@ -901,12 +725,9 @@ function Dashboard({
                   </div>
                 )}
               </div>
-              
+
               <div className="backtest-results-section">
-                <BacktestResults 
-                  results={backtestResults} 
-                  onDownload={handleDownloadResults}
-                />
+                <BacktestResults results={backtestResults} onDownload={handleDownloadResults} />
               </div>
             </div>
           </SectionCard>
@@ -919,10 +740,7 @@ function Dashboard({
           subtitle={`Monitoring ${universe.session_universe?.length || 0} stocks`}
           actions={
             universe.universe?.length ? (
-              <button 
-                className="btn ghost" 
-                onClick={() => setExpandUniverse(!expandUniverse)}
-              >
+              <button className="btn ghost" onClick={() => setExpandUniverse(!expandUniverse)}>
                 {expandUniverse ? "Collapse" : "Show Details"}
               </button>
             ) : null
@@ -947,7 +765,7 @@ function Dashboard({
                     <span className="stat-label">Total Universe</span>
                   </div>
                 </div>
-                
+
                 <div className="universe-list">
                   <div className="list-label">Active Watchlist:</div>
                   <div className="stock-tags">
@@ -957,7 +775,7 @@ function Dashboard({
                   </div>
                 </div>
               </div>
-              
+
               {expandUniverse && (
                 <div className="enhanced-table">
                   <div className="table-header">
@@ -967,18 +785,14 @@ function Dashboard({
                     <div>Volume (20D)</div>
                     <div>Score</div>
                   </div>
-                  
+
                   {universe.universe.map((stock, index) => (
                     <div className="table-row" key={index}>
-                      <div className="symbol-cell">
-                        <span className="symbol">{stock.Symbol}</span>
-                      </div>
+                      <div className="symbol-cell"><span className="symbol">{stock.Symbol}</span></div>
                       <div>{inr(stock.Close)}</div>
                       <div>{Number(stock.ATR_pct).toFixed(2)}%</div>
                       <div>{inr(stock.MedTurn20)}</div>
-                      <div className="score-cell">
-                        <span className="score-value">{Number(stock.Score).toFixed(3)}</span>
-                      </div>
+                      <div className="score-cell"><span className="score-value">{Number(stock.Score).toFixed(3)}</span></div>
                     </div>
                   ))}
                 </div>
@@ -989,10 +803,7 @@ function Dashboard({
       )}
 
       {tab === "activity" && (
-        <SectionCard 
-          title="Trading Activity" 
-          subtitle={`${todayTrades.length} events today`}
-        >
+        <SectionCard title="Trading Activity" subtitle={`${todayTrades.length} events today`}>
           {!todayTrades.length ? (
             <div className="empty-state">
               <div className="empty-icon">📋</div>
@@ -1012,10 +823,7 @@ function Dashboard({
                     <div className="activity-header">
                       <span className="activity-type">{trade.type}</span>
                       <span className="activity-time">
-                        {new Date(trade.ts).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
+                        {new Date(trade.ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                     <div className="activity-details">
@@ -1038,18 +846,14 @@ function Dashboard({
             <div className="control-section">
               <h4 className="control-section-title">Trading Controls</h4>
               <div className="control-actions">
-                <button
-                  className="control-btn primary"
-                  onClick={onScan}
-                  disabled={status.auth_required || !status.access_token_valid}
-                >
+                <button className="control-btn primary" onClick={onScan} disabled={status.auth_required || !status.access_token_valid}>
                   <span className="btn-icon">🔍</span>
                   <div className="btn-content">
                     <div className="btn-title">Manual Scan</div>
                     <div className="btn-desc">Trigger immediate market scan</div>
                   </div>
                 </button>
-                
+
                 <button className="control-btn" onClick={onPause}>
                   <span className="btn-icon">⏸️</span>
                   <div className="btn-content">
@@ -1057,7 +861,7 @@ function Dashboard({
                     <div className="btn-desc">Stop all automated trading</div>
                   </div>
                 </button>
-                
+
                 <button className="control-btn" onClick={onResume}>
                   <span className="btn-icon">▶️</span>
                   <div className="btn-content">
@@ -1067,26 +871,19 @@ function Dashboard({
                 </button>
               </div>
             </div>
-            
+
             <div className="control-section">
               <h4 className="control-section-title">System Operations</h4>
               <div className="control-actions">
-                <button
-                  className="control-btn"
-                  onClick={onRebuild}
-                  disabled={status.auth_required || !status.access_token_valid}
-                >
+                <button className="control-btn" onClick={onRebuild} disabled={status.auth_required || !status.access_token_valid}>
                   <span className="btn-icon">🔄</span>
                   <div className="btn-content">
                     <div className="btn-title">Rebuild Universe</div>
                     <div className="btn-desc">Refresh stock universe and scan</div>
                   </div>
                 </button>
-                
-                <button
-                  className="control-btn"
-                  onClick={() => window.open(API_BASE + "/health", "_blank")}
-                >
+
+                <button className="control-btn" onClick={() => window.open(API_BASE + "/health", "_blank")}>
                   <span className="btn-icon">🏥</span>
                   <div className="btn-content">
                     <div className="btn-title">System Health</div>
@@ -1101,32 +898,19 @@ function Dashboard({
 
       <footer className="dashboard-footer">
         <div className="footer-content">
-          <div className="footer-info">
-            <span className="footer-label">Platform:</span>
-            <span className="footer-value">Zerodha Kite API</span>
-          </div>
-          <div className="footer-info">
-            <span className="footer-label">Strategy:</span>
-            <span className="footer-value">VWAP + EMA20 (MTF) + ATR</span>
-          </div>
-          <div className="footer-info">
-            <span className="footer-label">Product:</span>
-            <span className="footer-value">MIS (Intraday)</span>
-          </div>
+          <div className="footer-info"><span className="footer-label">Platform:</span><span className="footer-value">Zerodha Kite API</span></div>
+          <div className="footer-info"><span className="footer-label">Strategy:</span><span className="footer-value">VWAP + EMA20 (MTF) + ATR</span></div>
+          <div className="footer-info"><span className="footer-label">Product:</span><span className="footer-value">MIS (Intraday)</span></div>
         </div>
       </footer>
     </div>
   );
 }
 
-// Main App Component
+/* ================= Main App ================= */
 export default function App() {
   const [status, setStatus] = useState(null);
-  const [universe, setUniverse] = useState({
-    version: null,
-    session_universe: [],
-    universe: [],
-  });
+  const [universe, setUniverse] = useState({ version: null, session_universe: [], universe: [] });
   const [health, setHealth] = useState(null);
   const [lastHealthAt, setLastHealthAt] = useState(null);
   const [note, setNote] = useState("");
@@ -1138,129 +922,127 @@ export default function App() {
   const [todayTrades, setTodayTrades] = useState([]);
   const prevPositionsRef = useRef({});
 
-  // Initialize request token from URL
+  // Initialize request token from URL (manual exchange flow compatibility)
   useEffect(() => {
     const rt = getQueryParam("request_token");
     if (rt && rt.length === 32) {
       setReqToken(rt);
       setReqTokenMsg("Token detected from URL. Click verify to continue.");
     }
-  }, []);
+  }, []); // Reads query; FE hydration best practice for OAuth params [3][4]
 
-  // Initial data load
+  // Handle OAuth redirect flags (auth=success/fail or request_token)
+  useEffect(() => {
+    (async () => {
+      const authFlag = getQueryParam("auth");
+      const hasReqToken = !!getQueryParam("request_token");
+      if (authFlag === "success" || authFlag === "fail" || hasReqToken) {
+        const { sessionStatus, s, u } = await confirmSessionAndRefresh();
+        setStatus(prev => ({ ...(prev || {}), ...sessionStatus, ...(s || {}) }));
+        if (u) setUniverse(u);
+        cleanUrlParams();
+      }
+    })();
+  }, []); // Process auth query once on landing [3][4]
+
+  // Initial data load + confirm session to set auth flags
   useEffect(() => {
     (async () => {
       try {
-        const [s, u, h] = await Promise.all([
+        const [s, u, h, ses] = await Promise.all([
           fetchJSON("/api/status").catch(() => null),
-          fetchJSON("/api/universe").catch(() => ({
-            session_universe: [],
-            universe: [],
-            version: null,
-          })),
+          fetchJSON("/api/universe").catch(() => ({ session_universe: [], universe: [], version: null })),
           fetchJSON("/health").catch(() => null),
+          fetchJSON("/auth/session").catch(() => null)
         ]);
-        
-        if (s) setStatus(s);
+        const sessionStatus = { access_token_valid: !!ses?.authenticated, auth_required: !ses?.authenticated };
+        setStatus({ ...(s || {}), ...sessionStatus });
         if (u) setUniverse(u);
-        if (h) {
-          setHealth(h);
-          setLastHealthAt(new Date());
-        }
+        if (h) { setHealth(h); setLastHealthAt(new Date()); }
       } catch (error) {
         setNote("Failed to load initial data. Please refresh the page.");
       }
     })();
-  }, []);
+  }, []); // Confirm session and hydrate UI after mount [3]
 
-  // Status polling
+  // Status polling (also probes session to keep flags fresh)
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const s = await fetchJSON("/api/status");
-        setStatus(s);
-        updateTradingActivity(s.positions || []);
-      } catch (error) {
-        // Silent fail for polling
-      }
+        const [s, ses] = await Promise.all([
+          fetchJSON("/api/status").catch(() => null),
+          fetchJSON("/auth/session").catch(() => null),
+        ]);
+        const sessionStatus = { access_token_valid: !!ses?.authenticated, auth_required: !ses?.authenticated };
+        const mergedStatus = { ...(s || {}), ...sessionStatus };
+        setStatus(mergedStatus);
+        updateTradingActivity((mergedStatus.positions) || []);
+      } catch {}
     }, POLL_MS);
-    
     return () => clearInterval(interval);
-  }, []);
+  }, []); // SPA polling + session check pattern [3]
 
-  // Health check polling
+  // Health polling
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const h = await fetchJSON("/health");
         setHealth(h);
         setLastHealthAt(new Date());
-      } catch (error) {
+      } catch {
         setNote("Connection issues detected. Some features may be limited.");
       }
     }, HEALTH_PING_MS);
-    
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Standard health polling
 
   function updateTradingActivity(currentPositions) {
     const previousPositions = prevPositionsRef.current;
     const currentPositionMap = {};
-
-    // Track current positions
     currentPositions.forEach((position) => {
       const key = `${position.symbol}_${position.entry_time}_${position.quantity}`;
       currentPositionMap[key] = position;
-      
-      // New position detected
       if (!previousPositions[key]) {
         todayTradesRef.current = [
-          {
-            type: "ENTRY",
-            ts: new Date().toISOString(),
-            symbol: position.symbol,
-            side: position.transaction_type,
-            qty: position.quantity,
-            price: position.buy_price,
-          },
+          { type: "ENTRY", ts: new Date().toISOString(), symbol: position.symbol, side: position.transaction_type, qty: position.quantity, price: position.buy_price },
           ...todayTradesRef.current,
         ];
       }
     });
-
-    // Check for closed positions
     Object.keys(previousPositions).forEach((key) => {
       if (!currentPositionMap[key]) {
         const position = previousPositions[key];
         todayTradesRef.current = [
-          {
-            type: "EXIT",
-            ts: new Date().toISOString(),
-            symbol: position.symbol,
-            side: position.transaction_type,
-            qty: position.quantity,
-            price: position.current_price,
-          },
+          { type: "EXIT", ts: new Date().toISOString(), symbol: position.symbol, side: position.transaction_type, qty: position.quantity, price: position.current_price },
           ...todayTradesRef.current,
         ];
       }
     });
-
     prevPositionsRef.current = currentPositionMap;
-    setTodayTrades(todayTradesRef.current.slice(0, 100)); // Keep last 100 trades
+    setTodayTrades(todayTradesRef.current.slice(0, 100));
   }
 
   async function executeControl(action) {
     setNote("");
     try {
-      const response = await fetchJSON(`/control/${action}`);
-      setNote(response.status || "Action completed successfully");
-      
-      if (action.includes("rebuild")) {
-        // Refresh universe data after rebuild
-        const universeData = await fetchJSON("/api/universe");
-        setUniverse(universeData);
+      if (action === "scan") {
+        const res = await fetchJSON("/cron/scan-opportunities", { method: "POST" });
+        setNote(res.status || "Scan triggered");
+      } else if (action === "rebuild_and_scan") {
+        await fetchJSON("/cron/universe-update", { method: "POST" });
+        const u = await fetchJSON("/api/universe").catch(() => null);
+        if (u) setUniverse(u);
+        const res = await fetchJSON("/cron/scan-opportunities", { method: "POST" });
+        setNote(res.status || "Universe refreshed, scan triggered");
+      } else if (action === "pause") {
+        setNote("Pause is UI-only for now.");
+      } else if (action === "resume") {
+        setNote("Resume is UI-only for now.");
+      } else {
+        window.open(API_BASE + "/health", "_blank");
       }
+      const s = await fetchJSON("/api/status").catch(() => null);
+      if (s) setStatus(prev => ({ ...(prev || {}), ...s }));
     } catch (error) {
       setNote(`Action failed: ${error.message}`);
     }
@@ -1269,11 +1051,8 @@ export default function App() {
   async function closePosition(symbol) {
     setNote("");
     try {
-      const response = await fetchJSON("/api/close-position", {
-        method: "POST",
-        body: { symbol },
-      });
-      setNote(response.message || "Position close request sent");
+      // Closing positions endpoint isn’t on the backend; keep user informed
+      setNote("Close position API not available. Please exit via broker or EOD monitor.");
     } catch (error) {
       setNote(`Failed to close position: ${error.message}`);
     }
@@ -1289,27 +1068,18 @@ export default function App() {
 
   async function verifyRequestToken() {
     setReqTokenMsg("");
-    
     if (!reqToken || reqToken.length !== 32) {
       setReqTokenMsg("Please enter a valid 32-character request token.");
       return;
     }
-
     try {
       setLoading(true);
-      const response = await fetchJSON("/session/exchange", {
-        method: "POST",
-        body: { request_token: reqToken },
-      });
-
+      const response = await fetchJSON("/session/exchange", { method: "POST", body: { request_token: reqToken } });
       if (response.success) {
         setReqTokenMsg("Authentication successful! Loading dashboard...");
-        
-        // Refresh status after successful auth
-        const statusData = await fetchJSON("/api/status");
-        setStatus(statusData);
-
-        // Clean up URL
+        const { sessionStatus, s, u } = await confirmSessionAndRefresh();
+        setStatus(prev => ({ ...(prev || {}), ...sessionStatus, ...(s || {}) }));
+        if (u) setUniverse(u);
         const url = new URL(window.location.href);
         if (url.searchParams.get("request_token")) {
           url.searchParams.delete("request_token");
@@ -1347,7 +1117,6 @@ export default function App() {
             canScan={!currentStatus.auth_required && currentStatus.access_token_valid}
             status={currentStatus}
           />
-          
           <Dashboard
             status={currentStatus}
             universe={universe}
