@@ -49,9 +49,20 @@ async function fetchJSON(path, options = {}) {
   const url = `${API_BASE}${path}`;
   const headers = { "Content-Type": "application/json" };
   const body = options.body ? JSON.stringify(options.body) : undefined;
+
   const res = await fetch(url, { ...options, headers, body });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+
+  // Gracefully handle 204 or empty 200 bodies
+  if (res.status === 204) return null;
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Fallback: treat non-JSON small payloads as null
+    return null;
+  }
 }
 
 function getQueryParam(name) {
