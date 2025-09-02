@@ -19,18 +19,11 @@ function pct(n) {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
+  return new Date(dateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function formatTime(dateStr) {
-  return new Date(dateStr).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  return new Date(dateStr).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
 function nextScanCountdown() {
@@ -66,18 +59,16 @@ function getQueryParam(name) {
   return params.get(name);
 }
 
-/* Helpers for auth hydration */
-const CLEANUP_QUERY_KEYS = ["auth","code","request_token"];
+// Helpers for auth hydration (single copy only)
+const CLEANUP_QUERY_KEYS = ["auth", "code", "request_token"];
 
 async function confirmSessionAndRefresh() {
   try {
-    // 1) Confirm backend auth
-    const ses = await fetchJSON("/auth/session"); // { authenticated: boolean }
+    const ses = await fetchJSON("/auth/session");
     const sessionStatus = {
       access_token_valid: !!ses?.authenticated,
       auth_required: !ses?.authenticated
     };
-    // 2) If authenticated, refresh data
     let s = null, u = null;
     if (ses?.authenticated) {
       s = await fetchJSON("/api/status").catch(() => null);
@@ -98,7 +89,7 @@ function cleanUrlParams() {
       changed = true;
     }
   });
-  if (changed) window.history.replaceState({}, "", url.toString());
+  if (changed) window.history.replaceState({}, document.title, url.toString());
 }
 
 /* ================= UI Components ================= */
@@ -116,10 +107,7 @@ function ProgressBar({ progress, status, className = "" }) {
   return (
     <div className={`progress-container ${className}`}>
       <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
-        />
+        <div className="progress-fill" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
       </div>
       <div className="progress-text">{status}</div>
     </div>
@@ -143,9 +131,7 @@ function ThemeToggle() {
   return (
     <button className="theme-toggle" onClick={() => setDark(v => !v)} aria-label="Toggle theme">
       <div className="theme-toggle-track">
-        <div className={`theme-toggle-thumb ${dark ? "dark" : "light"}`}>
-          {dark ? "🌙" : "☀️"}
-        </div>
+        <div className={`theme-toggle-thumb ${dark ? "dark" : "light"}`}>{dark ? "🌙" : "☀️"}</div>
       </div>
     </button>
   );
@@ -198,11 +184,7 @@ function Tabs({ value, onChange, items }) {
     <div className="enhanced-tabs">
       <div className="tabs-container">
         {items.map((item) => (
-          <button
-            key={item.value}
-            className={`tab-item ${value === item.value ? "active" : ""}`}
-            onClick={() => onChange(item.value)}
-          >
+          <button key={item.value} className={`tab-item ${value === item.value ? "active" : ""}`} onClick={() => onChange(item.value)}>
             <span className="tab-icon">{item.icon}</span>
             <span className="tab-label">{item.label}</span>
             {item.badge && <span className="tab-badge">{item.badge}</span>}
@@ -253,11 +235,7 @@ function KPI({ label, value, sub, trend, posneg, icon, className = "" }) {
 
 // Backtest Config
 function BacktestConfig({ onStart, loading }) {
-  const [config, setConfig] = useState({
-    start_date: "2024-06-01",
-    end_date: "2024-08-30",
-    capital: 25000
-  });
+  const [config, setConfig] = useState({ start_date: "2024-06-01", end_date: "2024-08-30", capital: 25000 });
 
   const presets = [
     { name: "Last 3 Months", start: "2024-06-01", end: "2024-08-30", desc: "Recent conditions" },
@@ -266,10 +244,7 @@ function BacktestConfig({ onStart, loading }) {
     { name: "Stress Test", start: "2024-03-15", end: "2024-04-15", desc: "High volatility" }
   ];
 
-  const handlePreset = (preset) => {
-    setConfig(prev => ({ ...prev, start_date: preset.start, end_date: preset.end }));
-  };
-
+  const handlePreset = (preset) => setConfig(prev => ({ ...prev, start_date: preset.start, end_date: preset.end }));
   const handleStart = () => onStart(config);
 
   return (
@@ -291,18 +266,15 @@ function BacktestConfig({ onStart, loading }) {
         <div className="config-inputs">
           <div className="input-group">
             <label htmlFor="start-date">Start Date</label>
-            <input id="start-date" type="date" className="input" value={config.start_date}
-              onChange={(e) => setConfig(prev => ({ ...prev, start_date: e.target.value }))}/>
+            <input id="start-date" type="date" className="input" value={config.start_date} onChange={(e) => setConfig(prev => ({ ...prev, start_date: e.target.value }))}/>
           </div>
           <div className="input-group">
             <label htmlFor="end-date">End Date</label>
-            <input id="end-date" type="date" className="input" value={config.end_date}
-              onChange={(e) => setConfig(prev => ({ ...prev, end_date: e.target.value }))}/>
+            <input id="end-date" type="date" className="input" value={config.end_date} onChange={(e) => setConfig(prev => ({ ...prev, end_date: e.target.value }))}/>
           </div>
           <div className="input-group">
             <label htmlFor="capital">Initial Capital</label>
-            <input id="capital" type="number" className="input" value={config.capital}
-              onChange={(e) => setConfig(prev => ({ ...prev, capital: parseInt(e.target.value || "0") }))} min="10000" step="1000"/>
+            <input id="capital" type="number" className="input" value={config.capital} onChange={(e) => setConfig(prev => ({ ...prev, capital: parseInt(e.target.value || "0") }))} min="10000" step="1000"/>
           </div>
         </div>
       </div>
@@ -498,7 +470,7 @@ function Dashboard({
     return "No qualifying signal";
   }, [status, universe]);
 
-  // Backtest polling (placeholder backend; keep UI behavior)
+  // Backtest polling
   useEffect(() => {
     let pollInterval;
     if (backtestStatus.status === 'running') {
@@ -538,9 +510,7 @@ function Dashboard({
     }
   };
 
-  const handleDownloadResults = () => {
-    window.open(API_BASE + "/backtest/csv", "_blank");
-  };
+  const handleDownloadResults = () => window.open(API_BASE + "/backtest/csv", "_blank");
 
   const tabItems = [
     { value: "overview", label: "Overview", icon: "🏠" },
@@ -643,13 +613,7 @@ function Dashboard({
         <SectionCard
           title={`Active Positions (${positions.length})`}
           subtitle={positions.length ? "Monitor your current trades" : "No active positions"}
-          actions={
-            positions.length ? (
-              <button className="btn ghost" onClick={() => setExpandPositions(!expandPositions)}>
-                {expandPositions ? "Collapse" : "Expand Details"}
-              </button>
-            ) : null
-          }
+          actions={positions.length ? (<button className="btn ghost" onClick={() => setExpandPositions(!expandPositions)}>{expandPositions ? "Collapse" : "Expand Details"}</button>) : null}
         >
           {!positions.length ? (
             <div className="empty-state">
@@ -738,13 +702,7 @@ function Dashboard({
         <SectionCard
           title={`Trading Universe ${universe.version ? `(${universe.version})` : ""}`}
           subtitle={`Monitoring ${universe.session_universe?.length || 0} stocks`}
-          actions={
-            universe.universe?.length ? (
-              <button className="btn ghost" onClick={() => setExpandUniverse(!expandUniverse)}>
-                {expandUniverse ? "Collapse" : "Show Details"}
-              </button>
-            ) : null
-          }
+          actions={universe.universe?.length ? (<button className="btn ghost" onClick={() => setExpandUniverse(!expandUniverse)}>{expandUniverse ? "Collapse" : "Show Details"}</button>) : null}
         >
           {!universe.universe?.length ? (
             <div className="empty-state">
@@ -815,9 +773,7 @@ function Dashboard({
               {todayTrades.map((trade, index) => (
                 <div key={index} className={`activity-item ${trade.type.toLowerCase()}`}>
                   <div className="activity-icon">
-                    <span className={`activity-badge ${trade.type === "ENTRY" ? "entry" : "exit"}`}>
-                      {trade.type === "ENTRY" ? "📈" : "📉"}
-                    </span>
+                    <span className={`activity-badge ${trade.type === "ENTRY" ? "entry" : "exit"}`}>{trade.type === "ENTRY" ? "📈" : "📉"}</span>
                   </div>
                   <div className="activity-content">
                     <div className="activity-header">
@@ -922,14 +878,14 @@ export default function App() {
   const [todayTrades, setTodayTrades] = useState([]);
   const prevPositionsRef = useRef({});
 
-  // Initialize request token from URL (manual exchange flow compatibility)
+  // Initialize request token from URL
   useEffect(() => {
     const rt = getQueryParam("request_token");
     if (rt && rt.length === 32) {
       setReqToken(rt);
       setReqTokenMsg("Token detected from URL. Click verify to continue.");
     }
-  }, []); // Reads query; FE hydration best practice for OAuth params [3][4]
+  }, []); // Reads query; FE hydration best practice for OAuth params [4][2]
 
   // Handle OAuth redirect flags (auth=success/fail or request_token)
   useEffect(() => {
@@ -943,9 +899,9 @@ export default function App() {
         cleanUrlParams();
       }
     })();
-  }, []); // Process auth query once on landing [3][4]
+  }, []); // Process auth query once on landing [2][4]
 
-  // Initial data load + confirm session to set auth flags
+  // Initial data load + confirm session
   useEffect(() => {
     (async () => {
       try {
@@ -963,9 +919,9 @@ export default function App() {
         setNote("Failed to load initial data. Please refresh the page.");
       }
     })();
-  }, []); // Confirm session and hydrate UI after mount [3]
+  }, []); // Confirm session and hydrate UI [7]
 
-  // Status polling (also probes session to keep flags fresh)
+  // Status polling + session probe
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -980,7 +936,7 @@ export default function App() {
       } catch {}
     }, POLL_MS);
     return () => clearInterval(interval);
-  }, []); // SPA polling + session check pattern [3]
+  }, []); // SPA polling + session check [7]
 
   // Health polling
   useEffect(() => {
@@ -994,7 +950,7 @@ export default function App() {
       }
     }, HEALTH_PING_MS);
     return () => clearInterval(interval);
-  }, []); // Standard health polling
+  }, []); // Standard health polling [7]
 
   function updateTradingActivity(currentPositions) {
     const previousPositions = prevPositionsRef.current;
@@ -1051,7 +1007,6 @@ export default function App() {
   async function closePosition(symbol) {
     setNote("");
     try {
-      // Closing positions endpoint isn’t on the backend; keep user informed
       setNote("Close position API not available. Please exit via broker or EOD monitor.");
     } catch (error) {
       setNote(`Failed to close position: ${error.message}`);
@@ -1060,10 +1015,10 @@ export default function App() {
 
   function handleKiteLogin() {
     if (!BACKEND_URL) {
-      setNote("Backend URL not configured. Please check your environment settings.");
+      setNote("Backend URL not configured. Please check environment settings.");
       return;
     }
-    window.location.href = `${BACKEND_URL}/auth/login?next=/`;
+    window.location.href = `${BACKEND_URL.replace(/\/+$/,"")}/auth/login?next=/`;
   }
 
   async function verifyRequestToken() {
@@ -1083,7 +1038,7 @@ export default function App() {
         const url = new URL(window.location.href);
         if (url.searchParams.get("request_token")) {
           url.searchParams.delete("request_token");
-          window.history.replaceState({}, "", url.toString());
+          window.history.replaceState({}, document.title, url.toString());
         }
       } else {
         setReqTokenMsg("Authentication failed. Please check your token and try again.");
