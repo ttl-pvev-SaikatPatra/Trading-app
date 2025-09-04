@@ -1,7 +1,12 @@
-// File: app/components/FundsCard.tsx
 import React from 'react';
+import { Funds } from '../types'; // Import the Funds type
 
-const FundsCard = ({ funds }: any) => {
+// Define the shape of the props
+interface FundsCardProps {
+  funds: Funds;
+}
+
+const FundsCard = ({ funds }: FundsCardProps) => {
   if (!funds) return <div className="p-6 bg-white rounded-lg shadow-sm animate-pulse h-40"></div>;
   
   const formatCurrency = (value: number) => `₹${(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
