@@ -1,7 +1,12 @@
-// File: app/components/PositionsTable.tsx
 import React from 'react';
+import { Position } from '../types'; // Import the Position type
 
-const PositionsTable = ({ positions }: any) => {
+// Define the shape of the props
+interface PositionsTableProps {
+  positions: Position[];
+}
+
+const PositionsTable = ({ positions }: PositionsTableProps) => {
   const formatCurrency = (value: number) => (value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
   return (
@@ -20,7 +25,7 @@ const PositionsTable = ({ positions }: any) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {positions.map((pos: any) => (
+              {positions.map((pos: Position) => (
                 <tr key={pos.symbol}>
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">{pos.symbol}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-mono">{pos.quantity}</td>

@@ -1,8 +1,15 @@
-// File: app/components/ControlsCard.tsx
 'use client';
 import React, { useState } from 'react';
+import { Status } from '../types'; // Import the Status type
 
-const ControlsCard = ({ status, apiUrl, mutateStatus }: any) => {
+// Define the shape of the props
+interface ControlsCardProps {
+  status: Status;
+  apiUrl: string | undefined;
+  mutateStatus: () => void;
+}
+
+const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleControlAction = async (action: string) => {
@@ -13,7 +20,6 @@ const ControlsCard = ({ status, apiUrl, mutateStatus }: any) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      // Re-fetch the status data to update the UI
       mutateStatus();
     } catch (error) {
       console.error(`Failed to perform action: ${action}`, error);
