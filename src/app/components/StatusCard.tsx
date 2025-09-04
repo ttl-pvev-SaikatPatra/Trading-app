@@ -1,13 +1,33 @@
-// File: app/components/StatusCard.tsx
 import React from 'react';
+import { Status } from '../types'; // Import the Status type
 
-const StatusBadge = ({ condition, textTrue, textFalse, colorTrue = 'bg-green-100 text-green-800', colorFalse = 'bg-red-100 text-red-800' }: any) => (
+// Define specific types for the component's props
+interface StatusBadgeProps {
+  condition: boolean;
+  textTrue: string;
+  textFalse: string;
+  colorTrue?: string;
+  colorFalse?: string;
+}
+
+interface StatusCardProps {
+  status: Status;
+  loginUrl: string;
+}
+
+const StatusBadge = ({ 
+  condition, 
+  textTrue, 
+  textFalse, 
+  colorTrue = 'bg-green-100 text-green-800', 
+  colorFalse = 'bg-red-100 text-red-800' 
+}: StatusBadgeProps) => (
   <span className={`px-2 py-1 text-xs font-medium rounded-full ${condition ? colorTrue : colorFalse}`}>
     {condition ? textTrue : textFalse}
   </span>
 );
 
-const StatusCard = ({ status, loginUrl }: any) => {
+const StatusCard = ({ status, loginUrl }: StatusCardProps) => {
   if (!status) return <div className="p-6 bg-white rounded-lg shadow-sm animate-pulse h-48"></div>;
 
   return (
