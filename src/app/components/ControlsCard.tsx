@@ -1,8 +1,8 @@
+// File: src/app/components/ControlsCard.tsx
 'use client';
 import React, { useState } from 'react';
-import { Status } from '../types'; // Import the Status type
+import { Status } from '../types';
 
-// Define the shape of the props
 interface ControlsCardProps {
   status: Status;
   apiUrl: string | undefined;
@@ -11,6 +11,23 @@ interface ControlsCardProps {
 
 const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  
+  // ==================================================================
+  // THIS IS THE FIX:
+  // If status data hasn't loaded yet, show a placeholder.
+  // This prevents the build from crashing.
+  // ==================================================================
+  if (!status) {
+    return (
+      <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="space-y-4">
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   const handleControlAction = async (action: string) => {
     setIsLoading(true);
