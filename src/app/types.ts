@@ -21,3 +21,9 @@ export interface Position {
   pnl: number;
   product: string;
 }
+
+// Add this interface to your existing types.ts file
+export interface UniverseStock {
+  symbol: string;
+  is_active: boolean;
+}
