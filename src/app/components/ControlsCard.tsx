@@ -7,16 +7,13 @@ interface ControlsCardProps {
   status: Status;
   apiUrl: string | undefined;
   mutateStatus: () => void;
+  mutateUniverse: () => void; // Add this prop
 }
 
-const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
+const ControlsCard = ({ status, apiUrl, mutateStatus, mutateUniverse }: ControlsCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  
-  // ==================================================================
-  // THIS IS THE FIX:
-  // If status data hasn't loaded yet, show a placeholder.
-  // This prevents the build from crashing.
-  // ==================================================================
+  const [isRebuilding, setIsRebuilding] = useState(false);
+
   if (!status) {
     return (
       <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 animate-pulse">
@@ -24,11 +21,12 @@ const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
         <div className="space-y-4">
           <div className="h-10 bg-gray-200 rounded"></div>
           <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded mt-4"></div>
         </div>
       </div>
     );
   }
-
+  
   const handleControlAction = async (action: string) => {
     setIsLoading(true);
     try {
@@ -43,6 +41,27 @@ const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
       alert(`Error: Could not perform action '${action}'.`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Function to handle the rebuild action
+  const handleRebuild = async () => {
+    setIsRebuilding(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/universe/rebuild`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to rebuild universe');
+      }
+      alert('Universe rebuild initiated successfully!');
+      // Re-fetch the universe data to update the watchlist
+      mutateUniverse();
+    } catch (error) {
+      console.error('Failed to rebuild universe:', error);
+      alert('Error: Could not rebuild universe.');
+    } finally {
+      setIsRebuilding(false);
     }
   };
 
@@ -70,6 +89,20 @@ const ControlsCard = ({ status, apiUrl, mutateStatus }: ControlsCardProps) => {
         {status.dry_run_mode === false && (
           <p className="text-xs text-center text-red-600 font-bold">WARNING: Live Trading is Active.</p>
         )}
+      </div>
+
+      {/* New Rebuild Universe Button */}
+      <div className="mt-6 border-t pt-4">
+         <button
+          onClick={handleRebuild}
+          disabled={isRebuilding || !status.broker_connected}
+          className="w-full px-4 py-2 font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          {isRebuilding ? 'Rebuilding...' : 'Rebuild Stock Universe'}
+        </button>
+        <p className="text-xs text-center text-gray-500 mt-2">
+          Manually refresh the list of tradable stocks for the day.
+        </p>
       </div>
     </div>
   );
