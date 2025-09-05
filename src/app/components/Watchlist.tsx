@@ -1,19 +1,25 @@
+// File: src/app/components/Watchlist.tsx
 import React from 'react';
 import useSWR from 'swr';
-import { UniverseStock } from '../types'; // Assuming you have a types.ts
+import { UniverseStock } from '../types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-const Watchlist = ({ universe, apiUrl }: { universe: UniverseStock[], apiUrl: string | undefined }) => {
+interface WatchlistProps {
+  universe: UniverseStock[] | undefined;
+  apiUrl: string | undefined;
+}
+
+const Watchlist = ({ universe, apiUrl }: WatchlistProps) => {
   // Create a query string of symbols from the universe
   const symbols = universe?.map(stock => stock.symbol).join('&symbols=');
   const batchDataUrl = symbols ? `${apiUrl}/api/market-data?symbols=${symbols}` : null;
   
-  // Fetch batch data for all symbols, refreshing every 10 seconds
-  const { data: marketData, error } = useSWR(batchDataUrl, fetcher, { refreshInterval: 10000 });
+  // Fetch batch data for all symbols, refreshing every 15 seconds
+  const { data: marketData, error } = useSWR(batchDataUrl, fetcher, { refreshInterval: 15000 });
 
   if (!universe) {
-    return <div>Loading watchlist...</div>;
+    return <div className="text-sm text-gray-500">Loading watchlist...</div>;
   }
   
   if (error) {
@@ -30,7 +36,7 @@ const Watchlist = ({ universe, apiUrl }: { universe: UniverseStock[], apiUrl: st
         const isPositive = change >= 0;
 
         return (
-          <div key={stock.symbol} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-100">
+          <div key={stock.symbol} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-100 transition-colors">
             <span className="font-semibold text-sm">{stock.symbol}</span>
             <div className="text-right">
               <span className="font-mono text-sm block">
