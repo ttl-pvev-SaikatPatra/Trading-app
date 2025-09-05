@@ -32,8 +32,24 @@ const LoginPage = () => {
         )}
 
         <div className="flex flex-col items-center space-y-4">
+          {/* ================================================================== */}
+          {/* THE FIX IS IN THE <LogIn> COMPONENT'S className BELOW           */}
+          {/* ================================================================== */}
           <a
             href={`${apiUrl}/auth/login`}
             className="group flex w-full items-center justify-center gap-3 px-5 py-3 text-center font-medium text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900 transition-transform transform hover:scale-105"
           >
-            <LogIn className="h-5 w-5 transition
+            <LogIn className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            <span>Login with Zerodha</span>
+          </a>
+        </div>
+
+        <p className="text-xs text-center text-slate-500">
+          You will be securely redirected to Kite by Zerodha to authorize this application.
+        </p>
+      </div>
+    </main>
+  );
+};
+
+export default LoginPage;
