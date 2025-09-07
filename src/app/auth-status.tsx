@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, Alert, Button, Spinner } from 'flowbite-react';
 import { FaPlay } from 'react-icons/fa';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const LoginStatus = () => {
   const searchParams = useSearchParams();
@@ -14,6 +14,15 @@ const LoginStatus = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // This useEffect will run on the client side
+    useEffect(() => {
+        // We'll add a check here to ensure backendUrl exists
+        if (!backendUrl) {
+            setError("Backend URL is not configured. Please check Vercel environment variables.");
+            setLoading(false);
+            return;
+        }
 
   useEffect(() => {
     const loginStatus = searchParams.get('login_status');
