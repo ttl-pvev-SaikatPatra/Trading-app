@@ -12,51 +12,55 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // State to track if the component has mounted on the client
+  const [hasMounted, setHasMounted] = useState(false);
+
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMounted) return; // Wait until component has mounted
+
     const loginStatus = searchParams.get('login_status');
     const userIdParam = searchParams.get('user_id');
     const errorMessage = searchParams.get('error');
 
     if (loginStatus === 'success' && userIdParam) {
-      // Authentication was successful via backend redirect
       console.log('Login successful. User ID:', userIdParam);
       setIsLoggedIn(true);
       setUserId(userIdParam);
       setError(null);
       setLoading(false);
     } else if (loginStatus === 'failed') {
-      // Handle failed login
       console.error('Login failed:', errorMessage);
       setError(errorMessage || 'Authentication failed. Please try again.');
       setIsLoggedIn(false);
       setLoading(false);
     } else {
-      // On initial load, check if we're already logged in (e.g., using a cookie or local storage)
-      // For this free stack, we'll keep it simple and assume a fresh session starts at login.
-      // If no login status, we assume the user needs to log in.
       setIsLoggedIn(false);
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, hasMounted]); // Include hasMounted in the dependency array
 
   const handleLogin = () => {
-    // Redirect to your backend's login endpoint to start the Zerodha auth flow
     window.location.href = `${backendUrl}/auth/login`;
   };
 
-  if (loading) {
+  // Render a placeholder or loading spinner until the component has mounted
+  if (!hasMounted || loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Spinner size="xl" />
-        <p className="ml-4 text-gray-700">Checking authentication status...</p>
+        <p className="ml-4 text-gray-700">Loading...</p>
       </div>
     );
   }
 
+  // --- Dashboard View ---
   if (isLoggedIn) {
-    // --- Dashboard View ---
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <h1 className="text-3xl font-bold text-gray-900">Trading Bot Dashboard</h1>
@@ -66,7 +70,6 @@ export default function Home() {
             Active
           </span>
         </p>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           <Card>
             <h5 className="text-2xl font-bold tracking-tight text-gray-900">Funds</h5>
