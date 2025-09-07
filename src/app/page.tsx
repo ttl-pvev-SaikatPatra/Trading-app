@@ -12,45 +12,39 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // State to track if the component has mounted on the client
-  const [hasMounted, setHasMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false); // New state to check for client-side render
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hasMounted) return; // Wait until component has mounted
-
+    // This effect runs only once, on the client
+    setIsClient(true);
+    
+    // Check for login status from URL parameters
     const loginStatus = searchParams.get('login_status');
     const userIdParam = searchParams.get('user_id');
     const errorMessage = searchParams.get('error');
 
     if (loginStatus === 'success' && userIdParam) {
-      console.log('Login successful. User ID:', userIdParam);
       setIsLoggedIn(true);
       setUserId(userIdParam);
       setError(null);
-      setLoading(false);
     } else if (loginStatus === 'failed') {
-      console.error('Login failed:', errorMessage);
       setError(errorMessage || 'Authentication failed. Please try again.');
       setIsLoggedIn(false);
-      setLoading(false);
     } else {
       setIsLoggedIn(false);
-      setLoading(false);
     }
-  }, [searchParams, hasMounted]); // Include hasMounted in the dependency array
+
+    setLoading(false);
+  }, [searchParams]);
 
   const handleLogin = () => {
     window.location.href = `${backendUrl}/auth/login`;
   };
 
-  // Render a placeholder or loading spinner until the component has mounted
-  if (!hasMounted || loading) {
+  // Render a loading spinner on the server and initial client-side render
+  if (!isClient || loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Spinner size="xl" />
