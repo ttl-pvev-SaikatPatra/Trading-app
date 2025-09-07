@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, Alert, Button, Spinner } from 'flowbite-react';
 import { FaPlay } from 'react-icons/fa';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+const backendUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const LoginStatus = () => {
     const searchParams = useSearchParams();
