@@ -1,76 +1,111 @@
-// File: src/app/page.tsx
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
-import StatusCard from './components/StatusCard';
-import FundsCard from './components/FundsCard';
-import ControlsCard from './components/ControlsCard';
-import PositionsTable from './components/PositionsTable';
-import Watchlist from './components/Watchlist';
-
-const fetcher = (url: string) => fetch(url).then(res => {
-  if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      return { broker_connected: false };
-    }
-    const error = new Error('An error occurred while fetching the data.');
-    console.error(res.statusText);
-    throw error;
-  }
-  return res.json();
-});
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, Spinner, Alert, Button } from 'flowbite-react';
+import { FaPlay } from 'react-icons/fa';
 
 export default function Home() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const { data: status, mutate: mutateStatus } = useSWR(`${apiUrl}/api/status`, fetcher, { refreshInterval: 5000 });
-  const { data: funds } = useSWR(status?.broker_connected ? `${apiUrl}/api/funds` : null, fetcher, { refreshInterval: 10000 });
-  const { data: positions } = useSWR(status?.broker_connected ? `${apiUrl}/api/positions` : null, fetcher, { refreshInterval: 5000 });
-  // Get the mutate function for the universe data
-  const { data: universe, mutate: mutateUniverse } = useSWR(status?.broker_connected ? `${apiUrl}/api/universe` : null, fetcher, { refreshInterval: 60000 });
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    if (status && !status.broker_connected) {
-      router.push('/login');
+    const loginStatus = searchParams.get('login_status');
+    const userIdParam = searchParams.get('user_id');
+    const errorMessage = searchParams.get('error');
+
+    if (loginStatus === 'success' && userIdParam) {
+      // Authentication was successful via backend redirect
+      console.log('Login successful. User ID:', userIdParam);
+      setIsLoggedIn(true);
+      setUserId(userIdParam);
+      setError(null);
+      setLoading(false);
+    } else if (loginStatus === 'failed') {
+      // Handle failed login
+      console.error('Login failed:', errorMessage);
+      setError(errorMessage || 'Authentication failed. Please try again.');
+      setIsLoggedIn(false);
+      setLoading(false);
+    } else {
+      // On initial load, check if we're already logged in (e.g., using a cookie or local storage)
+      // For this free stack, we'll keep it simple and assume a fresh session starts at login.
+      // If no login status, we assume the user needs to log in.
+      setIsLoggedIn(false);
+      setLoading(false);
     }
-  }, [status, router]);
-  
-  if (!status) {
+  }, [searchParams]);
+
+  const handleLogin = () => {
+    // Redirect to your backend's login endpoint to start the Zerodha auth flow
+    window.location.href = `${backendUrl}/auth/login`;
+  };
+
+  if (loading) {
     return (
-        <div className="flex h-screen bg-gray-100 text-gray-800 items-center justify-center">
-            <p>Loading and verifying session...</p>
-        </div>
+      <div className="flex justify-center items-center h-screen">
+        <Spinner size="xl" />
+        <p className="ml-4 text-gray-700">Checking authentication status...</p>
+      </div>
     );
   }
 
-  return (
-    <div className="flex h-screen bg-gray-100 text-gray-800">
-      <aside className="w-72 bg-white p-4 overflow-y-auto border-r border-gray-200">
-        <h2 className="text-xl font-bold mb-4">Universe</h2>
-        <Watchlist universe={universe} apiUrl={apiUrl} />
-      </aside>
+  if (isLoggedIn) {
+    // --- Dashboard View ---
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <h1 className="text-3xl font-bold text-gray-900">Trading Bot Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Connected as User ID: <span className="font-semibold">{userId}</span>
+          <span className="ml-2 px-2 py-0.5 text-xs font-medium text-white bg-green-500 rounded-full">
+            Active
+          </span>
+        </p>
 
-      <main className="flex-1 p-6 overflow-y-auto">
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Delayed data from free sources. Not for live trading decisions.</p>
-        </header>
-
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatusCard status={status} loginUrl={`${apiUrl}/auth/login`} />
-              <FundsCard funds={funds} />
-              {/* Pass the mutateUniverse function to the ControlsCard */}
-              <ControlsCard status={status} apiUrl={apiUrl} mutateStatus={mutateStatus} mutateUniverse={mutateUniverse} />
-            </div>
-            <div>
-              <PositionsTable positions={positions} />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <Card>
+            <h5 className="text-2xl font-bold tracking-tight text-gray-900">Funds</h5>
+            <p className="font-normal text-gray-700">Displaying your available funds.</p>
+          </Card>
+          <Card>
+            <h5 className="text-2xl font-bold tracking-tight text-gray-900">Live Trades</h5>
+            <p className="font-normal text-gray-700">Shows current and past trades.</p>
+          </Card>
+          <Card>
+            <h5 className="text-2xl font-bold tracking-tight text-gray-900">Universe</h5>
+            <p className="font-normal text-gray-700">Shows today's selected universe.</p>
+          </Card>
         </div>
-      </main>
+      </div>
+    );
+  }
+
+  // --- Login View ---
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+      <Card className="max-w-md w-full text-center">
+        <h5 className="text-2xl font-bold tracking-tight text-gray-900">
+          Intraday Trading Bot
+        </h5>
+        <p className="font-normal text-gray-700">
+          Automate your Indian equity trades with a free, reliable bot.
+        </p>
+        <Button onClick={handleLogin} color="success">
+          <FaPlay className="mr-2" /> Login with Zerodha
+        </Button>
+        {error && (
+          <Alert color="failure" className="mt-4">
+            <span>
+              <span className="font-medium">Error:</span> {error}
+            </span>
+          </Alert>
+        )}
+      </Card>
     </div>
   );
 }
